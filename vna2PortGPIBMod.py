@@ -1,23 +1,22 @@
 
 #import  sched,time
 #import  schedule
-from timeloop import Timeloop
+#from timeloop import Timeloop
 from datetime import timedelta
-import time
-#from threading import Timer
+import threading, time 
 import visa
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-TIMEOUT = 0.8805
+TIMEOUT = 3.0#0.8805
 complex_sample_list = []
 complex_sample_listj = []
 complex_sample_list2 = []
 complex_sample_list2j = []
 SAMPLES = 10
 count = 0
-tl = Timeloop()
+#tl = Timeloop()
 INST = None
 
 def measureSweepAscii():
@@ -55,7 +54,7 @@ def samplePoints():
   print ("{0}: Add Sample, time {1}".format(numSamples-count, time.time()) )
  
 
-@tl.job(interval=timedelta(seconds=TIMEOUT))
+#@tl.job(interval=timedelta(seconds=TIMEOUT))
 def twoPortSample():
   global complex_sample_list
   global complex_sample_listj
@@ -156,10 +155,18 @@ class vnaHP8753C_Gpib:
     complex_sample_list2j = []
 
     print ("Number of Samples to Read :", self.numSamples)
+    '''
     tl.start(block=False)
     while (count>0):
       time.sleep(0.5) 
     tl.stop()
+    '''
+    tick = threading.Event()
+    while not tick.wait(TIMEOUT):
+       if count > 0:
+          twoPortSample()
+       else: break
+
     print("\nStop Scheduler --> Going to average data")
     if len(complex_sample_list)  == 0:
       print "Error - No samples collected"

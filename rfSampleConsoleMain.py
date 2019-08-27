@@ -28,7 +28,7 @@ LOCATIONS = ['Proto_Station_0']
 MATERIALS = ['H2O', 'Air']
 SAMPLE_SHAPE = (2,100)
 MAX_SESS_SAMPLES = 100
-MOCK = True
+MOCK = False
 
 hdStore = None
 hp8753 = None
@@ -221,12 +221,12 @@ def main():
         dataSamp = hp8753.startSample()
         setUp['concentrate'] = np.random.uniform()
         hdStore.writeSamples(dataSamp,'/lab0', setUp) 
-        complex_sample21 = np.empty((201))
-        complex_sample11 = np.empty((201))
+        complex_sample21 = np.empty((201),dtype=complex)
+        complex_sample11 = np.empty((201),dtype=complex)
         complex_sample21[:] = dataSamp[0,:] + 1j*dataSamp[1,:]
         complex_sample11[:] = dataSamp[2,:] + 1j*dataSamp[3,:]
-        plotMeas2('S21', hp8753.freqL, complex_sample21)
-        plotMeas2('S11', hp8753.freqL, complex_sample11)
+        plotMeas2('S11', hp8753.freqL, complex_sample21)
+        plotMeas2('S21', hp8753.freqL, complex_sample11)
 
 #        countItems += 1
 #        writeOps += 1
@@ -250,7 +250,7 @@ def main():
           print ("Found %d entries"%(len(rows)))
           grlen= min(3, len(rows))
           print ("Plotting %d entries"%(grlen))
-          splot = raw_input("Select 1- S11, 2- S22 :")
+          splot = raw_input("Select 1- S11, 2- S21 :")
           try:
             sp = int(splot) -1
           except ValueError:
