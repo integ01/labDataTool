@@ -24,11 +24,11 @@ setUp = {
 }
 
 logBaseName = "sampleData"
-LOCATIONS = ['Proto_Station_0']
+LOCATIONS = ['lab0']
 MATERIALS = ['H2O', 'Air']
 SAMPLE_SHAPE = (2,100)
 MAX_SESS_SAMPLES = 100
-MOCK = False
+MOCK = True
 
 hdStore = None
 hp8753 = None
@@ -205,7 +205,7 @@ def main():
             filepath = dataBaseName
          filters1 = tables.Filters(complevel=0)
          hdStore = hdf5DataTable(filters=filters1, dataBase_=filepath)
-#        createH5DataBase(filepath, LOCATIONS) 
+         #hdStore.createH5DataBase(filepath, LOCATIONS) 
       elif ( cmd[0] == '1'):
          filepath = raw_input ("Enter Date Base name(Default=%s)"%(dataBaseName))
          if filepath == '':

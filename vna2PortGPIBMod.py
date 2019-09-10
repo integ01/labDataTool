@@ -5,7 +5,6 @@
 from datetime import timedelta
 import threading, time 
 import visa
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -91,9 +90,15 @@ class vnaHP8753C_Gpib:
 
   def __init__(self, Addr = 16, numSamples_= SAMPLES):
        global INST
-       self.rm = visa.ResourceManager('@py')
-       self.inst = self.rm.open_resource('GPIB0::{}::INSTR'.format(Addr))
+       try:
+         self.rm = visa.ResourceManager('@py')
+         self.inst = self.rm.open_resource('GPIB0::{}::INSTR'.format(Addr))
+       except:
+         print ("Error - Failed to open GPIB Interface")
+         raise AssertionError
        INST = self.inst
+       idStr = self.inst.query("*IDN?")
+       print ("Open Device : " + idStr)
        self.inst.write("POIN?;")
   #TODO-set points to 128
        pointStr = self.inst.read() #"POIN {0};".format(numpoints)
@@ -170,6 +175,7 @@ class vnaHP8753C_Gpib:
     print("\nStop Scheduler --> Going to average data")
     if len(complex_sample_list)  == 0:
       print "Error - No samples collected"
+      return None
     else: 
       sample_arr =  np.array(complex_sample_list)
       print ("Got samples array shape: {0}".format(sample_arr.shape))

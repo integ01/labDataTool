@@ -23,7 +23,7 @@ setUpP = {
   'freqSt': '2GHZ',
   'freqEn': '3GHZ',
   'material' : 'water',
-  'concentrate' : 0.8
+#  'concentrate' : 0.8
 }
 
 
@@ -36,8 +36,10 @@ def unixTimePostfix(time):
 
 class sampleTable(tables.IsDescription):
    unix_timestamp = tables.Int64Col(pos=0)
+   session = tables.Int32Col(pos=0)
 #   unix_timestamp = tables.Time64Col(pos=0)
-   material = tables.StringCol(20, pos=1)
+   material1 = tables.StringCol(20, pos=1)
+   material2 = tables.StringCol(20, pos=1)
    rho = tables.Float32Col(pos=2)
    notes = tables.StringCol(50, pos=3)
    sData = tables.Float64Col(shape=(SAMPLE_SHAPE), dflt=0.0)
@@ -69,7 +71,7 @@ class hdf5DataTable:
       self.printData('/lab0',setUpP)
     else:
      if os.path.exists(filename):
-       raw_input("File %s already exists, do you want to erase it and start new?"%(filename))
+       cmd = raw_input("File %s already exists, do you want to erase it and start new?"%(filename))
        if (cmd[0]=='y'):
            self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'],filters)
 #           self.filename = self.createPandasH5Table(self.data_dir, dataBaseName, ['lab0'],filters)
@@ -80,16 +82,16 @@ class hdf5DataTable:
 #    filename = self.get_filename(file_,filters)
 #    filename = os.path.join(data_dir, filename)
 #   hdstore = pd.HDFStore(FILENAME, "w")
-    print("Creating file:", filename)
+    print("Creating file:", file_)
     loc = locations[0]
     print("H5 path :%s"%(loc))
-    with tables.open_file(filename, "w", filters=filters) as f:
+    with tables.open_file(file_, "w", filters=filters) as f:
       table_lens = f.create_table(f.root, loc, sampleTable)#, maxshape=(10000,))
       print ('Created table:' )
       print ( loc)
     
   #    table_lens.append([lens[col].values for col in table_lens.dtype.names])
-    return filename
+    return file_
 
   def get_filename(self, file_, filters):
         if filters.complevel != 0:
@@ -113,13 +115,13 @@ class hdf5DataTable:
     ndt = np.dtype(tbl.dtype)
     print(ndt.itemsize)
     i=0
-    print( "unix_timestamp                , Material , Rho , Notes, Data ")
+    print( "unix_timestamp,    session       , Material , Rho , Notes, Data ")
     print( "=====================================================")
     for x in tbl.iterrows():
 #    print(x[tbl[:])
-       print( "%d: %-16s, %10s, %0.4f, %-10s, %f"%(x['unix_timestamp'], unixTimePostfix(x['unix_timestamp']), x['material'], x['rho'], "notes...", x['sData'][0,0] ) )
+       print( "%-16s, %d, %10s, %0.4f, %-10s, %f"%( unixTimePostfix(x['unix_timestamp']), x['session'], x['material1'], x['rho'], "notes...", x['sData'][0,0] ) )
        i +=1
-       if i > 10: 
+       if i > 100: 
          break
     print( "Table %s, len:%d"%(grp, len(tbl)))
     f.close()
@@ -132,11 +134,13 @@ class hdf5DataTable:
     #now = int(time.time())
     now = int(time.time())
  
-    item['unix_timestamp']=now
-    item['material']=setUp['material']
-    item['rho']=setUp['concentrate']
+    item['unix_timestamp']= now
+    item['session'] =  setUp['session']
+    item['material1']= setUp['material']
+    item['material2']=''
+    item['rho']= 0.0 #setUp['concentrate']
     item['notes']= "Notes-Nothing"
-    item['sData']=nData
+    item['sData']= nData
     print("Wrote sample to table:{}, type:{}".format( nData.shape, type(nData)))
     item.append()
     tbl.flush()
@@ -171,8 +175,9 @@ class hdf5DataTable:
     print( "=====================================================")
     for x in tbl.where(qStr): 
 #    print(x[tbl[:])
-       print( "%d: %-16s, %10s, %0.4f, %-10s, %f"%(x['unix_timestamp'], unixTimePostfix(x['unix_timestamp']), x['material'], x['rho'], "notes...", x['sData'][0,0] ) )
-       res.append((x['material'], x['rho'], x['sData']))
+       print( "%-16s, %d,  %10s, %0.4f, %-10s, %f"%( unixTimePostfix(x['unix_timestamp']), x['session'], x['material1'], x['rho'], "notes...", x['sData'][0,0] ) )
+       #res.append(x['session'], x['material'], x['rho'], x['sData']))
+       res.append( {'session': x['session'], 'material':x['material1'], 'concentrate':x['rho'], 'sData':x['sData']})
     f.close()
     return res
 
