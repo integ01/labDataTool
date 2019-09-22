@@ -8,11 +8,12 @@
 #    Sep 08, 2019 05:59:26 PM IDT  platform: Linux
 #    Sep 10, 2019 11:14:47 AM IDT  platform: Linux
 #   TODO - DB:Add fields for test parameters, materials
-#    GUI  - remove field initial concen, 
+#    GUI  - remove field initial concen, Update Current Concentrate
 #         - add options for view Graphs
 #         - option for show DB
 #         - Add Repeat button?
 #         - Add read Text fields in Measurement press
+#         - 
   
 
 import sys
@@ -95,8 +96,9 @@ def btnContinuePress():
       mat1Concen = 0.0
     
     expr['mat1Concen']= str(mat1Concen)
-    w.Text_Mat1Concen.delete(1.0, tk.END)
-    w.Text_Mat1Concen.insert(1.0, str(expr['mat1Concen']))
+#    w.Text_Mat1Concen.delete(1.0, tk.END)
+    w.TextCurrentConc1.delete(1.0,tk.END)
+    w.TextCurrentConc1.insert(1.0, str(expr['mat1Concen']))
 
 def btnDonePress():
     global rfSystem
@@ -105,6 +107,7 @@ def btnDonePress():
     print('LabExper0_support.btnDonePress')
     sys.stdout.flush()
     state = 0
+    currSess = rfSystem.maxsess
     rfSystem.maxsess += 1
     w.Text_Session.delete(1.0, tk.END)
     w.Text_Session.insert(1.0, str(rfSystem.maxsess))
@@ -112,6 +115,7 @@ def btnDonePress():
 
     w.Text_Instruct.delete('1.0', tk.END)
     w.Text_Instruct.insert('1.0', "Test Session End\n==========")
+    rfSystem.getDataPlot('Session', currSess)
 
 def btnMeasurePress():
     global state
@@ -235,7 +239,8 @@ def init(top, gui, *args, **kwargs):
     rfSystem = rfSampleHub.rfSampleHubHP( dataBaseName, True)
     rfSystem.maxsess += 1
     w.Text_Session.insert(1.0, str(rfSystem.maxsess))
-    w.Text_Mat1Concen.insert(1.0, "0.0")
+    w.Text_Mat1Concen.insert(1.0, "0.1")
+    w.TextCurrentConc1.insert(1.0,"0.0")
     w.Text_NumMeasures.insert("1.0", "10")
 
     state = 0
