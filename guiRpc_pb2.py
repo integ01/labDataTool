@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='guiRpc',
   syntax='proto3',
   serialized_options=_b('\n\032io.grpc.labDataTool.guiRpcB\013GuiRpcProtoP\001\242\002\003HLW'),
-  serialized_pb=_b('\n\x0cguiRpc.proto\x12\x06guiRpc\"\x15\n\x06STATUS\x12\x0b\n\x03ret\x18\x01 \x01(\t\"\x98\x01\n\x0bSampleArray\x12.\n\x06Sparam\x18\x01 \x01(\x0e\x32\x1e.guiRpc.SampleArray.SParamType\x12\x13\n\x0b\x64\x61ta_length\x18\x02 \x01(\x05\x12\x12\n\ndata_bytes\x18\x03 \x01(\x0c\"0\n\nSParamType\x12\x07\n\x03S11\x10\x00\x12\x07\n\x03S21\x10\x01\x12\x07\n\x03S12\x10\x02\x12\x07\n\x03S22\x10\x03\"T\n\x0f\x45xperimentSetup\x12\x10\n\x08operator\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x02 \x01(\t\x12\x0f\n\x07\x66reqLow\x18\x03 \x01(\x02\x12\x10\n\x08\x66reqHigh\x18\x04 \x01(\x02\x32I\n\x06GuiRpc\x12?\n\x0bstartSample\x12\x17.guiRpc.ExperimentSetup\x1a\x13.guiRpc.SampleArray\"\x00\x30\x01\x42\x31\n\x1aio.grpc.labDataTool.guiRpcB\x0bGuiRpcProtoP\x01\xa2\x02\x03HLWb\x06proto3')
+  serialized_pb=_b('\n\x0cguiRpc.proto\x12\x06guiRpc\"4\n\tByteBlock\x12\x13\n\x0b\x64\x61ta_length\x18\x02 \x01(\x05\x12\x12\n\ndata_bytes\x18\x01 \x01(\x0c\"\x15\n\x06STATUS\x12\x0b\n\x03ret\x18\x01 \x01(\t\"\xaf\x01\n\x0bSampleArray\x12.\n\x06Sparam\x18\x01 \x01(\x0e\x32\x1e.guiRpc.SampleArray.SParamType\x12\x1f\n\x04\x64\x61ta\x18\x02 \x01(\x0b\x32\x11.guiRpc.ByteBlock\x12\x1d\n\x02\x66\x66\x18\x03 \x01(\x0b\x32\x11.guiRpc.ByteBlock\"0\n\nSParamType\x12\x07\n\x03S11\x10\x00\x12\x07\n\x03S21\x10\x01\x12\x07\n\x03S12\x10\x02\x12\x07\n\x03S22\x10\x03\"T\n\x0f\x45xperimentSetup\x12\x10\n\x08operator\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x02 \x01(\t\x12\x0f\n\x07\x66reqLow\x18\x03 \x01(\x02\x12\x10\n\x08\x66reqHigh\x18\x04 \x01(\x02\x32I\n\x06GuiRpc\x12?\n\x0bstartSample\x12\x17.guiRpc.ExperimentSetup\x1a\x13.guiRpc.SampleArray\"\x00\x30\x01\x42\x31\n\x1aio.grpc.labDataTool.guiRpcB\x0bGuiRpcProtoP\x01\xa2\x02\x03HLWb\x06proto3')
 )
 
 
@@ -50,10 +50,48 @@ _SAMPLEARRAY_SPARAMTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=152,
-  serialized_end=200,
+  serialized_start=229,
+  serialized_end=277,
 )
 _sym_db.RegisterEnumDescriptor(_SAMPLEARRAY_SPARAMTYPE)
+
+
+_BYTEBLOCK = _descriptor.Descriptor(
+  name='ByteBlock',
+  full_name='guiRpc.ByteBlock',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='data_length', full_name='guiRpc.ByteBlock.data_length', index=0,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='data_bytes', full_name='guiRpc.ByteBlock.data_bytes', index=1,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=24,
+  serialized_end=76,
+)
 
 
 _STATUS = _descriptor.Descriptor(
@@ -82,8 +120,8 @@ _STATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=24,
-  serialized_end=45,
+  serialized_start=78,
+  serialized_end=99,
 )
 
 
@@ -102,16 +140,16 @@ _SAMPLEARRAY = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='data_length', full_name='guiRpc.SampleArray.data_length', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
+      name='data', full_name='guiRpc.SampleArray.data', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='data_bytes', full_name='guiRpc.SampleArray.data_bytes', index=2,
-      number=3, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b(""),
+      name='ff', full_name='guiRpc.SampleArray.ff', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -128,8 +166,8 @@ _SAMPLEARRAY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=48,
-  serialized_end=200,
+  serialized_start=102,
+  serialized_end=277,
 )
 
 
@@ -180,16 +218,26 @@ _EXPERIMENTSETUP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=202,
-  serialized_end=286,
+  serialized_start=279,
+  serialized_end=363,
 )
 
 _SAMPLEARRAY.fields_by_name['Sparam'].enum_type = _SAMPLEARRAY_SPARAMTYPE
+_SAMPLEARRAY.fields_by_name['data'].message_type = _BYTEBLOCK
+_SAMPLEARRAY.fields_by_name['ff'].message_type = _BYTEBLOCK
 _SAMPLEARRAY_SPARAMTYPE.containing_type = _SAMPLEARRAY
+DESCRIPTOR.message_types_by_name['ByteBlock'] = _BYTEBLOCK
 DESCRIPTOR.message_types_by_name['STATUS'] = _STATUS
 DESCRIPTOR.message_types_by_name['SampleArray'] = _SAMPLEARRAY
 DESCRIPTOR.message_types_by_name['ExperimentSetup'] = _EXPERIMENTSETUP
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+ByteBlock = _reflection.GeneratedProtocolMessageType('ByteBlock', (_message.Message,), {
+  'DESCRIPTOR' : _BYTEBLOCK,
+  '__module__' : 'guiRpc_pb2'
+  # @@protoc_insertion_point(class_scope:guiRpc.ByteBlock)
+  })
+_sym_db.RegisterMessage(ByteBlock)
 
 STATUS = _reflection.GeneratedProtocolMessageType('STATUS', (_message.Message,), {
   'DESCRIPTOR' : _STATUS,
@@ -221,8 +269,8 @@ _GUIRPC = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=288,
-  serialized_end=361,
+  serialized_start=365,
+  serialized_end=438,
   methods=[
   _descriptor.MethodDescriptor(
     name='startSample',

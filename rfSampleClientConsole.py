@@ -195,9 +195,9 @@ def main(rpcClient):
         cmds = loadScript(filepath)
       elif ( cmd[0] == '4'):
 
-        dataSamps = rpcClient.lab_start_sample()
+        dataSamps, ffs = rpcClient.lab_start_sample()
 #        dataSamp = hp8753.startSample()
-
+#        print (ffs.shape)
         setUp['concentrate'] = np.random.uniform()
         hdStore.writeSamples(np.vstack(dataSamps),'/lab0', setUp) 
         complex_sample21 = np.empty((201),dtype=complex)
@@ -205,9 +205,9 @@ def main(rpcClient):
         complex_sample21[:] = (dataSamps[0])[0::2] + 1j*(dataSamps[0])[1::2]
         complex_sample11[:] = (dataSamps[1])[0::2] + 1j*(dataSamps[1])[1::2]
         #TODO - add this to the read fields
-        freqL = np.linspace(2e+9,3e+9,201)
-        plotMeas2('S11', freqL, complex_sample21)
-        plotMeas2('S21', freqL, complex_sample11)
+        #freqL = np.linspace(2e+9,3e+9,201)
+        plotMeas2('S11', ffs[0], complex_sample21)
+        plotMeas2('S21', ffs[0], complex_sample11)
 
 #        countItems += 1
 #        writeOps += 1

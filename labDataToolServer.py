@@ -53,18 +53,31 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
      print (dataSamp[0][0])
      sType = [guiRpc_pb2.SampleArray.S11, guiRpc_pb2.SampleArray.S21]
      for i, arr_i in enumerate(dataSamp):
-       byt1 = bytearray([])
-       for b in list(arr_i):
-          byt1 +=  bytearray(struct.pack("d", b))
+        byt1 = bytearray([])
+        for b in list(arr_i):
+           byt1 +=  bytearray(struct.pack("d", b))
+        ffbyt = bytearray([])
+        for b in self.vnaMach.freqL:
+          ffbyt +=  bytearray(struct.pack("f", b))
+#        np.frombuffer(message_image, dtype=np.uint8)
 
-       sampleArr = guiRpc_pb2.SampleArray(
-        Sparam = sType[i],
-        data_length = len(arr_i),
-        data_bytes = bytes(byt1)
+        dataB = guiRpc_pb2.ByteBlock( 
+             data_length =  len(arr_i),
+             data_bytes = bytes(byt1)
+         )
+        ffB = guiRpc_pb2.ByteBlock( 
+             data_length = len(self.vnaMach.freqL),
+             data_bytes = bytes(ffbyt)
+         )
+
+        sampleArr = guiRpc_pb2.SampleArray(
+         Sparam = sType[i],
+         data = dataB,
+         ff = ffB 
    #     data_bytes = np.ndarray.tobytes(values)
-       )
-       print ("Got RPC request for Sample, return array len:%d"%(len(arr_i)))
-       yield sampleArr
+        )
+        print ("Got RPC request for Sample, Sample return array len:%d, Freq return len:%d"%(dataB.data_length, ffB.data_length ))
+        yield sampleArr
 
 #  def labCmd(self, request, context):
 #    return guiRpc_pb2.STATUS(ret = "Lab cmd: %d param:%s === OK."%(request.cmd, request.param1)

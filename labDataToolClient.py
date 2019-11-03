@@ -31,16 +31,28 @@ class clientRpcAPI():
       exprSetup = guiRpc_pb2.ExperimentSetup(operator="Ben", date="2019", freqLow=1e9, freqHigh=2e9)
       samples = self.stub.startSample(exprSetup)
       samplesNp = []
+      ffsNp = []
       for sample in samples:
         print ("Stub returned sample type:%s"%(type(sample)) )
-        print( "Sample SParam:%s data Len:%d"%( sample.Sparam,sample.data_length) )
-        print( "Sample Data head:%f"%( struct.unpack('d', sample.data_bytes[:8]) ))
+        print ("Stub returned ff type:%s"%(type(sample.ff.data_bytes)) )
+        print ("Stub returned ff byte len:%d"%(len(sample.ff.data_bytes)) )
+        print( "Sample SParam:%s data Len:%d"%( sample.Sparam,sample.data.data_length) )
+        print( "Sample Freq:%s data Len:%d"%( sample.Sparam,sample.ff.data_length) )
+        print( "Sample Data head:%f"%( struct.unpack('d', sample.data.data_bytes[:8]) ))
         sampleNp = np.empty((402),dtype=np.dtype('f8') )
-        for i in range(sample.Sparam,sample.data_length//8):
-          print (struct.unpack('d', sample.data_bytes[i*8:i*8+8]))
-          sampleNp[i] = struct.unpack('d', sample.data_bytes[i*8:i*8+8])[0]
+
+        ffNp = np.frombuffer(sample.ff.data_bytes, dtype=np.float32)
+        sampleNp = np.frombuffer(sample.data.data_bytes, dtype=np.float64)
+#        ffNp = np.empty((201),dtype=np.dtype('f4') )
+#        for i in range(201):
+#          ffNp[i] = struct.unpack('f', sample.ff.data_bytes[i*4:i*4+4])[0]
+#        for i in range(sample.Sparam,sample.data.data_length//8):
+          #print (struct.unpack('d', sample.data.data_bytes[i*8:i*8+8]))
+#          sampleNp[i] = struct.unpack('d', sample.data.data_bytes[i*8:i*8+8])[0]
+          
         samplesNp.append(sampleNp)
-      return samplesNp
+        ffsNp.append(ffNp)
+      return (samplesNp, ffsNp)
 
 
 #def get_data_plot(stub):

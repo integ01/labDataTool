@@ -33,6 +33,10 @@ service GuiRpc {
  // rpc labCmd(LabCommand) returns (STATUS) {}
 }
 
+message ByteBlock { 
+  int32 data_length = 2;
+  bytes data_bytes =1;
+};
 
 message STATUS {
   string ret = 1;
@@ -49,8 +53,10 @@ enum SParamType {
     S22 = 3;
 }
   SParamType Sparam = 1;
-  int32 data_length = 2;
-  bytes data_bytes =3;
+  //int32 data_length = 2;
+  //bytes data_bytes =3;
+  ByteBlock data = 2;
+  ByteBlock ff = 3;
 //  StreamBytes data = 5;
 
 }
