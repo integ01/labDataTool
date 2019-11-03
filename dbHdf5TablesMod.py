@@ -13,7 +13,7 @@ import sys
 import os
 import shutil
 
-SAMPLE_SHAPE = (4,201)
+SAMPLE_SHAPE = (2,402)
 MAX_SESS_SAMPLES = 100
 dataBaseName = "dataFile0"
 Filters = None
@@ -70,11 +70,13 @@ class hdf5DataTable:
     if restore:
       self.printData('/lab0',setUpP)
     else:
+     print ("hdf5 init) Create data Base:"+filename)
      if os.path.exists(filename):
        cmd = raw_input("File %s already exists, do you want to erase it and start new?"%(filename))
        if (cmd[0]=='y'):
-           self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'],filters)
-#           self.filename = self.createPandasH5Table(self.data_dir, dataBaseName, ['lab0'],filters)
+           self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'], filters)
+     else:
+       self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'], filters)
     return  
 
 

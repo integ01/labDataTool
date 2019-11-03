@@ -144,7 +144,7 @@ class vnaHP8753C_GpibMock:
     new2 = np.array([ values2[i*2] for i in range(len(values2)//2)])
     new2_ = np.array([ values2[i*2+1] for i in range(len(values2)//2)])
 #    print (new[:10])
-    return np.vstack((new, new_, new2, new2_))
+    return [values, values2]
 
 
    
@@ -152,8 +152,8 @@ class vnaHP8753C_GpibMock:
 #   def startSample()
 #
   def startSample(self):
-    numSamples = 100
-    print ("Number of Samples to Read :", numSamples)
+#    numSamples = 100
+#    print ("Number of Samples to Read :", numSamples)
     return self.samplePoints()
     '''
     s = sched.scheduler(time.time, time.sleep)
