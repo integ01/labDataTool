@@ -143,6 +143,18 @@ def plotMeas2(title, w_,X_):
   #plt.title('Phase Response')
   plt.show()
 
+def measureRemoteCall(rpcClient):
+        dataSamps, ffs = rpcClient.lab_start_sample()
+        #setUp['concentrate'] = np.random.uniform()
+        #hdStore.writeSamples(np.vstack(dataSamps),'/lab0', setUp) 
+        complex_sample21 = np.empty((201),dtype=complex)
+        complex_sample11 = np.empty((201),dtype=complex)
+        complex_sample21[:] = (dataSamps[0])[0::2] + 1j*(dataSamps[0])[1::2]
+        complex_sample11[:] = (dataSamps[1])[0::2] + 1j*(dataSamps[1])[1::2]
+        #TODO - add this to the read fields
+        #freqL = np.linspace(2e+9,3e+9,201)
+        plotMeas2('S11', ffs[0], complex_sample21)
+        plotMeas2('S21', ffs[0], complex_sample11)
 
 
 def printUsageSelect():

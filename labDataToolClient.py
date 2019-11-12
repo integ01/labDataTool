@@ -20,11 +20,12 @@ class clientRpcAPI():
       
       self.channel  = grpc.insecure_channel(IP_PORT)
       self.stub = guiRpc_pb2_grpc.GuiRpcStub(self.channel)
-      
+      print ("Connect to: "+ str(self.channel))
+
     except:
-      print("GRPC init exception has been caught.")
+      #print("GRPC init exception has been caught.")
       #printUsageSelect()
-      return
+      raise ValueError("GRPC init exception has been caught ")
 
   def lab_start_sample(self):
     #with self.channel as channel:
