@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='guiRpc',
   syntax='proto3',
   serialized_options=_b('\n\032io.grpc.labDataTool.guiRpcB\013GuiRpcProtoP\001\242\002\003HLW'),
-  serialized_pb=_b('\n\x0cguiRpc.proto\x12\x06guiRpc\"4\n\tByteBlock\x12\x13\n\x0b\x64\x61ta_length\x18\x02 \x01(\x05\x12\x12\n\ndata_bytes\x18\x01 \x01(\x0c\"\x15\n\x06STATUS\x12\x0b\n\x03ret\x18\x01 \x01(\t\"\xaf\x01\n\x0bSampleArray\x12.\n\x06Sparam\x18\x01 \x01(\x0e\x32\x1e.guiRpc.SampleArray.SParamType\x12\x1f\n\x04\x64\x61ta\x18\x02 \x01(\x0b\x32\x11.guiRpc.ByteBlock\x12\x1d\n\x02\x66\x66\x18\x03 \x01(\x0b\x32\x11.guiRpc.ByteBlock\"0\n\nSParamType\x12\x07\n\x03S11\x10\x00\x12\x07\n\x03S21\x10\x01\x12\x07\n\x03S12\x10\x02\x12\x07\n\x03S22\x10\x03\"T\n\x0f\x45xperimentSetup\x12\x10\n\x08operator\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x02 \x01(\t\x12\x0f\n\x07\x66reqLow\x18\x03 \x01(\x02\x12\x10\n\x08\x66reqHigh\x18\x04 \x01(\x02\x32I\n\x06GuiRpc\x12?\n\x0bstartSample\x12\x17.guiRpc.ExperimentSetup\x1a\x13.guiRpc.SampleArray\"\x00\x30\x01\x42\x31\n\x1aio.grpc.labDataTool.guiRpcB\x0bGuiRpcProtoP\x01\xa2\x02\x03HLWb\x06proto3')
+  serialized_pb=_b('\n\x0cguiRpc.proto\x12\x06guiRpc\"4\n\tByteBlock\x12\x13\n\x0b\x64\x61ta_length\x18\x02 \x01(\x05\x12\x12\n\ndata_bytes\x18\x01 \x01(\x0c\"\x15\n\x06STATUS\x12\x0b\n\x03ret\x18\x01 \x01(\t\"\xc9\x01\n\x0bSampleArray\x12\x0f\n\x07Meas_id\x18\x01 \x01(\x05\x12.\n\x06Sparam\x18\x02 \x01(\x0e\x32\x1e.guiRpc.SampleArray.SParamType\x12\x1f\n\x04\x64\x61ta\x18\x03 \x01(\x0b\x32\x11.guiRpc.ByteBlock\x12\x1d\n\x02\x66\x66\x18\x04 \x01(\x0b\x32\x11.guiRpc.ByteBlock\"9\n\nSParamType\x12\x07\n\x03Nop\x10\x00\x12\x07\n\x03S11\x10\x01\x12\x07\n\x03S21\x10\x02\x12\x07\n\x03S12\x10\x03\x12\x07\n\x03S22\x10\x04\"\xbe\x03\n\x0f\x45xperimentSetup\x12\x0f\n\x07Meas_id\x18\x01 \x01(\x05\x12\x13\n\x0b\x45NADataMode\x18\x02 \x01(\x05\x12\x16\n\x0eNumberOfPoints\x18\x03 \x01(\x05\x12\x11\n\tfreq_STAR\x18\x04 \x01(\x02\x12\x11\n\tfreq_STOP\x18\x05 \x01(\x02\x12\x11\n\tfreq_CENT\x18\x06 \x01(\x02\x12\x11\n\tfreq_SPAN\x18\x07 \x01(\x02\x12\x12\n\ndataFormat\x18\x08 \x01(\x05\x12\x33\n\x07Sparam1\x18\t \x01(\x0e\x32\".guiRpc.ExperimentSetup.SParamType\x12\x33\n\x07Sparam2\x18\n \x01(\x0e\x32\".guiRpc.ExperimentSetup.SParamType\x12\x33\n\x07Sparam3\x18\x0b \x01(\x0e\x32\".guiRpc.ExperimentSetup.SParamType\x12\x33\n\x07Sparam4\x18\x0c \x01(\x0e\x32\".guiRpc.ExperimentSetup.SParamType\"9\n\nSParamType\x12\x07\n\x03Nop\x10\x00\x12\x07\n\x03S11\x10\x01\x12\x07\n\x03S21\x10\x02\x12\x07\n\x03S12\x10\x03\x12\x07\n\x03S22\x10\x04\x32I\n\x06GuiRpc\x12?\n\x0bstartSample\x12\x17.guiRpc.ExperimentSetup\x1a\x13.guiRpc.SampleArray\"\x00\x30\x01\x42\x31\n\x1aio.grpc.labDataTool.guiRpcB\x0bGuiRpcProtoP\x01\xa2\x02\x03HLWb\x06proto3')
 )
 
 
@@ -32,28 +32,66 @@ _SAMPLEARRAY_SPARAMTYPE = _descriptor.EnumDescriptor(
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='S11', index=0, number=0,
+      name='Nop', index=0, number=0,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='S21', index=1, number=1,
+      name='S11', index=1, number=1,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='S12', index=2, number=2,
+      name='S21', index=2, number=2,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='S22', index=3, number=3,
+      name='S12', index=3, number=3,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='S22', index=4, number=4,
       serialized_options=None,
       type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=229,
-  serialized_end=277,
+  serialized_start=246,
+  serialized_end=303,
 )
 _sym_db.RegisterEnumDescriptor(_SAMPLEARRAY_SPARAMTYPE)
+
+_EXPERIMENTSETUP_SPARAMTYPE = _descriptor.EnumDescriptor(
+  name='SParamType',
+  full_name='guiRpc.ExperimentSetup.SParamType',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='Nop', index=0, number=0,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='S11', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='S21', index=2, number=2,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='S12', index=3, number=3,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='S22', index=4, number=4,
+      serialized_options=None,
+      type=None),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=246,
+  serialized_end=303,
+)
+_sym_db.RegisterEnumDescriptor(_EXPERIMENTSETUP_SPARAMTYPE)
 
 
 _BYTEBLOCK = _descriptor.Descriptor(
@@ -133,22 +171,29 @@ _SAMPLEARRAY = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='Sparam', full_name='guiRpc.SampleArray.Sparam', index=0,
-      number=1, type=14, cpp_type=8, label=1,
+      name='Meas_id', full_name='guiRpc.SampleArray.Meas_id', index=0,
+      number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='data', full_name='guiRpc.SampleArray.data', index=1,
-      number=2, type=11, cpp_type=10, label=1,
+      name='Sparam', full_name='guiRpc.SampleArray.Sparam', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='data', full_name='guiRpc.SampleArray.data', index=2,
+      number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='ff', full_name='guiRpc.SampleArray.ff', index=2,
-      number=3, type=11, cpp_type=10, label=1,
+      name='ff', full_name='guiRpc.SampleArray.ff', index=3,
+      number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -167,7 +212,7 @@ _SAMPLEARRAY = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=102,
-  serialized_end=277,
+  serialized_end=303,
 )
 
 
@@ -179,30 +224,86 @@ _EXPERIMENTSETUP = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='operator', full_name='guiRpc.ExperimentSetup.operator', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='Meas_id', full_name='guiRpc.ExperimentSetup.Meas_id', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='date', full_name='guiRpc.ExperimentSetup.date', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='ENADataMode', full_name='guiRpc.ExperimentSetup.ENADataMode', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='freqLow', full_name='guiRpc.ExperimentSetup.freqLow', index=2,
-      number=3, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
+      name='NumberOfPoints', full_name='guiRpc.ExperimentSetup.NumberOfPoints', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='freqHigh', full_name='guiRpc.ExperimentSetup.freqHigh', index=3,
+      name='freq_STAR', full_name='guiRpc.ExperimentSetup.freq_STAR', index=3,
       number=4, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='freq_STOP', full_name='guiRpc.ExperimentSetup.freq_STOP', index=4,
+      number=5, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='freq_CENT', full_name='guiRpc.ExperimentSetup.freq_CENT', index=5,
+      number=6, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='freq_SPAN', full_name='guiRpc.ExperimentSetup.freq_SPAN', index=6,
+      number=7, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='dataFormat', full_name='guiRpc.ExperimentSetup.dataFormat', index=7,
+      number=8, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='Sparam1', full_name='guiRpc.ExperimentSetup.Sparam1', index=8,
+      number=9, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='Sparam2', full_name='guiRpc.ExperimentSetup.Sparam2', index=9,
+      number=10, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='Sparam3', full_name='guiRpc.ExperimentSetup.Sparam3', index=10,
+      number=11, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='Sparam4', full_name='guiRpc.ExperimentSetup.Sparam4', index=11,
+      number=12, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -211,6 +312,7 @@ _EXPERIMENTSETUP = _descriptor.Descriptor(
   ],
   nested_types=[],
   enum_types=[
+    _EXPERIMENTSETUP_SPARAMTYPE,
   ],
   serialized_options=None,
   is_extendable=False,
@@ -218,14 +320,19 @@ _EXPERIMENTSETUP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=279,
-  serialized_end=363,
+  serialized_start=306,
+  serialized_end=752,
 )
 
 _SAMPLEARRAY.fields_by_name['Sparam'].enum_type = _SAMPLEARRAY_SPARAMTYPE
 _SAMPLEARRAY.fields_by_name['data'].message_type = _BYTEBLOCK
 _SAMPLEARRAY.fields_by_name['ff'].message_type = _BYTEBLOCK
 _SAMPLEARRAY_SPARAMTYPE.containing_type = _SAMPLEARRAY
+_EXPERIMENTSETUP.fields_by_name['Sparam1'].enum_type = _EXPERIMENTSETUP_SPARAMTYPE
+_EXPERIMENTSETUP.fields_by_name['Sparam2'].enum_type = _EXPERIMENTSETUP_SPARAMTYPE
+_EXPERIMENTSETUP.fields_by_name['Sparam3'].enum_type = _EXPERIMENTSETUP_SPARAMTYPE
+_EXPERIMENTSETUP.fields_by_name['Sparam4'].enum_type = _EXPERIMENTSETUP_SPARAMTYPE
+_EXPERIMENTSETUP_SPARAMTYPE.containing_type = _EXPERIMENTSETUP
 DESCRIPTOR.message_types_by_name['ByteBlock'] = _BYTEBLOCK
 DESCRIPTOR.message_types_by_name['STATUS'] = _STATUS
 DESCRIPTOR.message_types_by_name['SampleArray'] = _SAMPLEARRAY
@@ -269,8 +376,8 @@ _GUIRPC = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=365,
-  serialized_end=438,
+  serialized_start=754,
+  serialized_end=827,
   methods=[
   _descriptor.MethodDescriptor(
     name='startSample',

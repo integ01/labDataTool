@@ -15,8 +15,11 @@ import os
 
 import logging
 import labDataToolClient
-
-from dbHdf5TablesMod import hdf5DataTable
+import sys
+sys.path.append("../HDF/")
+#from dbHdf5TablesMod import hdf5DataTable
+from dbHdf5TablesMod_v2_3 import hdf5DataTable
+from dbHdf5TablesMod_v2_3 import hdf5Client
 
 import matplotlib.pyplot as plt
 ### Unix time : time.time()
@@ -26,12 +29,19 @@ import matplotlib.pyplot as plt
 
 #
 setUp = {
-  'time' : None,
-  'freqSt': '2GHZ',
-  'freqEn': '3GHZ',
-  'material' : 'water',
-  'concentrate' : 0.8,
-  'session' : 1
+  #'time' : None,
+  'session': 0,
+  'author': 'ben',
+  'title' : 'water and Nacl',
+  'experimentOK' : 1,
+  'volume' :  100, 
+  'numberOfMeasurements' : 5,
+  'measurmentNumber' : 1,
+  'numberOfComponents' : 2,
+  'component0' : 'water',
+  'component1' : 'Nacl',
+  'P0_volume' : 100,
+  'P1' : 22
 }
 
 logBaseName = "sampleData"
@@ -68,6 +78,7 @@ def test_db(hdStore, numOper):
     oper = np.random.randint(1,10)
     if oper > 1:
       dataSamp = hp8753Mock.startSample()  
+      #TODO fix this
       setUp['concentrate'] = np.random.uniform()
       hdStore.writeSamples(dataSamp,'/lab0', setUp) 
       countItems += 1
@@ -143,6 +154,18 @@ def plotMeas2(title, w_,X_):
   #plt.title('Phase Response')
   plt.show()
 
+def setEnaParams(paramItems):
+  enaParamKeys = ['Meas_id', 'ENADataMode', 'NumOfPoints', 'freq_STAR',
+                     'freq_STOP', 'freq_CENT', 'freq_SPAN', 'dataFormat', 
+                      'S11', 'S21', 'S12', 'S22' ]
+  enaP = {}
+  if len(paramItems) != len(enaParamKeys):
+     print ("set Ena Params Error: List length mishmatch")
+     return 
+  for key, item  in zip(enaParamKeys, paramItems):
+       enaP[key] = item
+  return enaP
+
 def measureRemoteCall(rpcClient):
         dataSamps, ffs = rpcClient.lab_start_sample()
         #setUp['concentrate'] = np.random.uniform()
@@ -172,54 +195,80 @@ def printUsageSelect():
   print ("\n=======================")
   print("\nEnter selection (1,2, 3 or command)")
 
+
 def main(rpcClient):
 
   global MOCK
   global hdStore
-
+  global hdClient
 
 
   while (1):
+    global gEna
     printUsageSelect()
     try:
       cmds = []
-      cmd = raw_input ("term>")
+      #cmd = raw_input ("term>")
+      cmd = input ("term>")
       if len(cmd) == 0:
          continue
 #      cmd = input ("term>")
       if ( cmd[0] == '8'):
-         filepath = raw_input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
+         filepath = input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
          if filepath == '':
             filepath = dataBaseName
          filters1 = tables.Filters(complevel=0)
          hdStore = hdf5DataTable(filters=filters1, dataBase_=filepath)
-         #hdStore.createH5DataBase(filepath, LOCATIONS) 
+         #hdClient = hdf5Client(filepath, filters1)
+         ##hdStore.createH5DataBase(filepath, LOCATIONS) 
       elif ( cmd[0] == '1'):
-         filepath = raw_input ("Enter Date Base name(Default=%s)"%(dataBaseName))
+         #filepath = raw_input ("Enter Date Base name(Default=%s)"%(dataBaseName))
+         filepath = input ("Enter Date Base name(Default=%s)"%(dataBaseName))
          if filepath == '':
             filepath = dataBaseName
          filters1=tables.Filters(complevel=0)
          hdStore = hdf5DataTable(filters=filters1, dataBase_=filepath, restore=True)
+         #hdClient = hdf5Client(filepath, filters1)
       elif ( cmd[0] == '2'):
         showSampleParams()
       elif ( cmd[0] == '6' or cmd[0]=='3'):
         filepath = raw_input ("Enter Sample Parameters file name:")
         cmds = loadScript(filepath)
       elif ( cmd[0] == '4'):
-
-        dataSamps, ffs = rpcClient.lab_start_sample()
+      # ['Meas_id', 'ENADataMode', 'NPoints', 'fSTAR', 'fSTOP', 'fCENT', 'fSPAN',
+      # 'dFormat', 'S11', 'S21', 'S12', 'S22' ]
+        #enaP = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 2, -1, -1])
+        
+        gEna['Meas_id'] =  gEna['Meas_id'] + 1
+        print (gEna)
+        dataSamps, ffs, sampsIDs = rpcClient.lab_start_sample(gEna)
 #        dataSamp = hp8753.startSample()
-#        print (ffs.shape)
-        setUp['concentrate'] = np.random.uniform()
-        hdStore.writeSamples(np.vstack(dataSamps),'/lab0', setUp) 
-        complex_sample21 = np.empty((201),dtype=complex)
-        complex_sample11 = np.empty((201),dtype=complex)
-        complex_sample21[:] = (dataSamps[0])[0::2] + 1j*(dataSamps[0])[1::2]
-        complex_sample11[:] = (dataSamps[1])[0::2] + 1j*(dataSamps[1])[1::2]
+        
+
+        numPoints = dataSamps[0].shape[0]//2
+        print("ff len:",ffs[0].shape)
+        print("numPoints: {}".format(numPoints))
+        print (dataSamps[0].shape)
+        print ("Reply Meas_id, S_type :{}".format(sampsIDs[0]))
+
+        ######## TODO - checkmeasID and S_type match request ena  
+       # setUp['concentrate'] = np.random.uniform()
+
+#        hdStore.writeSamples(np.vstack(dataSamps),'/lab0', setUp) 
+        complexSamples = [ np.array((samp[0::2] + 1j*samp[1::2])) for samp
+            in dataSamps]
+
+        ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0]}
+        hdStore.aggParams2TableWrite(setUp, ndarry, gEna, grp='/lab0') 
+
+#        complex_sample21 = np.empty((numPoints),dtype=complex128)
+#        complex_sample11 = np.empty((numPoints),dtype=complex128)
+#        complex_sample21[:] = (dataSamps[0])[0::2] + 1j*(dataSamps[0])[1::2]
+#        complex_sample11[:] = (dataSamps[1])[0::2] + 1j*(dataSamps[1])[1::2]
         #TODO - add this to the read fields
         #freqL = np.linspace(2e+9,3e+9,201)
-        plotMeas2('S11', ffs[0], complex_sample21)
-        plotMeas2('S21', ffs[0], complex_sample11)
+        plotMeas2('S11', ffs[0], complexSamples[0])
+        plotMeas2('S21', ffs[0], complexSamples[1])
 
 #        countItems += 1
 #        writeOps += 1
@@ -278,6 +327,7 @@ def main(rpcClient):
 
 if __name__ == '__main__':  # You should keep this line for our auto-grading code.
   logging.basicConfig()
+  gEna = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
   rpcClient = labDataToolClient.clientRpcAPI()
   main(rpcClient)
 

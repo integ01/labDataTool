@@ -45,29 +45,44 @@ message STATUS {
 
 
 message SampleArray {
-
-enum SParamType {
-    S11 = 0;
-    S21 = 1;
-    S12 = 2;
-    S22 = 3;
-}
-  SParamType Sparam = 1;
-  //int32 data_length = 2;
-  //bytes data_bytes =3;
-  ByteBlock data = 2;
-  ByteBlock ff = 3;
+  enum SParamType {
+    Nop = 0;
+    S11 = 1;
+    S21 = 2;
+    S12 = 3;
+    S22 = 4;
+  }
+  int32 Meas_id = 1;
+  SParamType Sparam = 2;
+  ByteBlock data = 3;
+  ByteBlock ff = 4;
 //  StreamBytes data = 5;
 
 }
 
-
+//'ENADataMode', 'NumberOfPoints', 'STAR', 'STOP',
+//                  'CENT', 'SPAN', 'dataFromat' 
 message ExperimentSetup {
-  string operator = 1;
-  string date = 2;
-  float freqLow = 3;
-  float freqHigh = 4;
-//  SParamType Sparam = 5;
+  enum SParamType {
+    Nop = 0;
+    S11 = 1;
+    S21 = 2;
+    S12 = 4;
+    S22 = 8;
+  }
+
+  int32 Meas_id = 1;
+  int32 ENADataMode = 2;
+  int32 NumberOfPoints =3;
+  float freq_STAR =4;
+  float freq_STOP =5;
+  float freq_CENT =6;
+  float freq_SPAN =7;
+  int32 dataFormat =8;
+  SParamType Sparam1 = 9;
+  SParamType Sparam2 = 10;
+  SParamType Sparam3 = 11;
+  SParamType Sparam4 = 12;
   //repeated Material material = 5;
   
 }  

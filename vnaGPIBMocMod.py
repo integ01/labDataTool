@@ -1,6 +1,6 @@
 
 import  sched,time
-import visa
+#import visa
 #import matplotlib.pyplot as plt
 import numpy as np
 
@@ -60,6 +60,7 @@ def plotMeas(w_,X_):
 class instMock:
    def __init__(self):
      self.cmd = ''
+     self.nPoints = 201
 
    def query(self, cmd):
      return '' 
@@ -72,14 +73,14 @@ class instMock:
    def read(self, d=''):
      if 'POIN?' in self.cmd:
         self.cmd = ''
-        return '201'
+        return str(self.nPoints)
      else: 
         self.cmd = ''
         return ''
  
    def read_raw(self, cmd=''):
      if 'OUTPLIML' in self.cmd:
-        freqList = [ 2e+9+i*1e+9/200 for i in range(201)]
+        freqList = [ 2e+9+i*1e+9/(self.nPoints-1) for i in range(self.nPoints)]
         fstr = ''
         for it in freqList:
           fstr += str(it) +', 0, 0, 0 \n'
@@ -87,12 +88,12 @@ class instMock:
         return fstr
 
    def query_binary_values( self, cmd ,datatype='d', header_fmt='hp', is_big_endian=True):
-        values = np.random.rand(201) 
-        exp = np.array([ 10**(np.random.randint(-2,8)) for i in range(201)])
+        values = np.random.rand(self.nPoints) 
+        exp = np.array([ 10**(np.random.randint(-2,8)) for i in range(self.nPoints)])
         values *= exp
-        phi = (np.random.rand(201) -0.5)* 6 *np.pi 
+        phi = (np.random.rand(self.nPoints) -0.5)* 6 *np.pi 
 #        print (phi)
-        finval = np.empty((402))
+        finval = np.empty((self.nPoints*2))
         print (finval.shape)
         for i in range(len(values)):
           finval[i*2] = values[i] * np.cos(phi[i])
@@ -104,12 +105,14 @@ class vnaHP8753C_GpibMock:
   def __init__(self, Addr = 16):
        self.rm = None #visa.ResourceManager('@py')
        self.inst = instMock() #rm.open_resource('GPIB0::{}::INSTR'.format(Addr))
+       self.setFreqList(201)
 
+  def setFreqList(self, nPoints): 
        self.inst.write("POIN?;")
   #TODO-set points to 128
        pointStr = self.inst.read()#"POIN {0};".format(numpoints)
        print ("Number of Point to Read Per Sample: ", pointStr)
-  
+ 
        # Get Frequency list
        self.inst.write("OUTPLIML;")
        self.inst.write('FORM3')
@@ -122,10 +125,12 @@ class vnaHP8753C_GpibMock:
        self.complex_sample_list = None #np.array(None)
 
 
-  def samplePoints(self):
+  def samplePoints(self, nPoints ):
     global complex_sample_list
     self.inst.query('OPC?;SING;')
     self.inst.write('FORM3')
+    self.inst.nPoints = nPoints
+    self.setFreqList(nPoints)
     values = self.inst.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)
     values2 = self.inst.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)
     #return np.vstack((values,values2))
@@ -151,10 +156,11 @@ class vnaHP8753C_GpibMock:
 #########################
 #   def startSample()
 #
-  def startSample(self):
+  def startSample(self,nPoints=201):
+
 #    numSamples = 100
 #    print ("Number of Samples to Read :", numSamples)
-    return self.samplePoints()
+    return self.samplePoints(nPoints)
     '''
     s = sched.scheduler(time.time, time.sleep)
   

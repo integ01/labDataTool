@@ -46,7 +46,9 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
 #    pass
 
    def startSample(self, request, context):
-     dataSamp = self.vnaMach.startSample()
+     print ("Get request parameters: id:{}, Points:{}, freqStart:{}, freqEnd:{}".format(request.Meas_id, request.NumberOfPoints, request.freq_STAR, request.freq_STOP))
+     print ("Get request Sparams : {}".format(request.Sparam1 ) )
+     dataSamp = self.vnaMach.startSample(nPoints = request.NumberOfPoints)
 #     values = query_binary_values( 'OUTPDATA', datatype='d', header_fmt='hp', is_big_endian=True)
      
 #     print ("First data value : %d"%(dataSamp[0,0]))
@@ -71,6 +73,7 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
          )
 
         sampleArr = guiRpc_pb2.SampleArray(
+         Meas_id = request.Meas_id,
          Sparam = sType[i],
          data = dataB,
          ff = ffB 

@@ -63,8 +63,8 @@ class MainApp(wx.App):
         #mainFrame.show(True)
         self.m_buttonStart.Bind( wx.EVT_BUTTON, self.m_buttonStartOnButtonClick )
         self.m_buttonMeasure.Bind( wx.EVT_BUTTON, self.m_buttonMeasureOnButtonClick )
-	self.m_buttonStop.Bind( wx.EVT_BUTTON, self.m_buttonStopOnButtonClick )
-	self.m_buttonCont.Bind( wx.EVT_BUTTON, self.m_buttonContOnButtonClick )
+        self.m_buttonStop.Bind( wx.EVT_BUTTON, self.m_buttonStopOnButtonClick )
+        self.m_buttonCont.Bind( wx.EVT_BUTTON, self.m_buttonContOnButtonClick )
         self.m_buttonConnect.Bind( wx.EVT_BUTTON, self.m_buttonConnectOnButtonClick )
 
         self.frameMain.Show(True)
@@ -262,8 +262,8 @@ class MainApp(wx.App):
 if __name__ == '__main__':
 
    # Adding RPC client    
-#    logging.basicConfig()
-#    rpcClient = labDataToolClient.clientRpcAPI() #IP_PORT = 'localhost:50051'
+    #logging.basicConfig()
+    #rpcClient = labDataToolClient.clientRpcAPI() #IP_PORT = 'localhost:50051'
     #main(rpcClient)
 
     appframe = MainApp(False)
