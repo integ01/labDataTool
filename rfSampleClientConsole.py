@@ -12,14 +12,12 @@ import tables
 import time
 import datetime
 import os
-
 import logging
 import labDataToolClient
 import sys
-sys.path.append("../HDF/")
-#from dbHdf5TablesMod import hdf5DataTable
-from dbHdf5TablesMod_v2_3 import hdf5DataTable
-from dbHdf5TablesMod_v2_3 import hdf5Client
+#sys.path.append("../HDF/")
+#from dbHdf5TablesMod_v2_3 import hdf5DataTable
+from dbHdf5TablesMod import hdf5DataTable
 
 import matplotlib.pyplot as plt
 ### Unix time : time.time()
@@ -97,12 +95,11 @@ def test_db(hdStore, numOper):
 
 
 def showSampleParams():
-  global setUpParam
   global hdStore
 
   print("Show Sample Params: (TBD)")
   print ("TODO - Add query here")
-  hdStore.printData('/lab0', setUp)
+  hdStore.printData('/lab0')
 #  for it in setUpParam.items():
 #    print (it)
   return
@@ -186,7 +183,7 @@ def printUsageSelect():
   print ("2. Get Data from Database ")
   print ("3. VNA setup (TBD)")
   print ("4. Start Sample")
-  print ("5. Plot Data")
+  print ("5. Query & Plot Data")
   print ("6(TBD). Run Test Script and Save data")
   print ("7. Test DB")
   print ("8. Start New DataBase ")
@@ -200,7 +197,6 @@ def main(rpcClient):
 
   global MOCK
   global hdStore
-  global hdClient
 
 
   while (1):
@@ -277,7 +273,9 @@ def main(rpcClient):
       elif ( cmd[0] == '5'):
         parami = 0
         print ("Options: Today, LastHour, LastMinutes, Yesterday, All")
-        cmd = raw_input ("Enter query for DB items (for raw cmd use '@' prefix):")
+        cmd = input ("Enter query for DB items (for raw cmd use '@' prefix):")
+        if len(cmd)== 0:
+          cmd='All'
         if cmd[0]=='@':
           qstr = cmd[1:]
         else:
@@ -286,13 +284,24 @@ def main(rpcClient):
             parami = int(param)
           ts=hdStore.getTimeStamp(cmd, parami)  
           qstr = "unix_timestamp >= %d"%(ts)
-        #print ("Debug: using query"+ qstr)
-          rows = hdStore.query('/lab0',qstr)
+          print ("Debug: using query"+ qstr)
+          rows = hdStore.query('/lab0/exprTable',qstr)
+          print (rows[:])
           clist = []
           print ("Found %d entries"%(len(rows)))
           grlen= min(3, len(rows))
           print ("Plotting %d entries"%(grlen))
-          splot = raw_input("Select 1- S11, 2- S21 :")
+          dL = []
+          for i in range(grlen):
+            datapath = rows.loc[i]['dataArrRef'].decode()
+            print (datapath)
+            darray = hdStore.getDataByRef(datapath)
+            print (darray.shape, darray.dtype)
+            print (darray.attrs.sparam1)
+            freqL = darray.attrs.ff
+
+            dL.append(darray)
+          splot = input("Select 1- S11, 2- S21 :")
           try:
             sp = int(splot) -1
           except ValueError:
@@ -301,15 +310,14 @@ def main(rpcClient):
           if (sp != 0 and sp !=1):
             print ("Wrong value -- using Option 1 ")
             sp = 0
-          for it in rows[:grlen]:
-            values = it[2] #'sData']
-            complex_sample = np.empty((201),dtype=complex)
-            print("Data type on query:", values.dtype) 
-            complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
+          for data in dL:
+            complex_sample = np.squeeze(data[0, :, sp]) #'sData']
+            #print("Data type on query:", values.dtype) 
+            #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
             print(complex_sample.shape) 
             print(type(complex_sample[0]))
             clist.append(complex_sample)
-          plotMeas(hp8753.freqL, clist)
+          plotMeas(freqL, clist)
       elif ( cmd[0] == '9'):
          print("====== Quiting =========")
          return

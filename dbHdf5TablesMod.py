@@ -15,7 +15,7 @@ import shutil
 
 from tables.group import RootGroup
 from typing import Any, Union
-
+import pandas as pd
 #SAMPLE_SHAPE = (2, 402)
 MAX_SESS_SAMPLES = 100
 dataBaseName = "dataFile0"
@@ -117,13 +117,14 @@ class hdf5DataTable:
         filename = os.path.join(self.data_dir, filename)
         self.filename = filename
         if restore:
-            self.printData('/lab0', setUpP)
+            self.printData('/lab0')
         else:
             print ("hdf5 init) Create data Base:" + filename)
             if os.path.exists(filename):
                 #cmd = raw_input("File %s already exists, do you want to erase it and start new?" % (filename))
                 cmd = input("File %s already exists, do you want to erase it and start new?" % (filename))
-                if (cmd[0] != 'y'):
+                if len(cmd)==0 or (len(cmd)> 0 and cmd[0] != 'y'):
+                    #TODO - add exception here
                     return
             self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'], filters)
         return
@@ -190,13 +191,15 @@ class hdf5DataTable:
             print ("print table:%s" % (self.filename))
             f = tables.open_file(self.filename, "r", filters=self.Filters)
             print(list(f))
-            tbl = f.get_node(grp)  # type: Union[Union[RootGroup, object], Any]
-            print("Table %s, len:%d" % (grp, len(tbl)))
-            #    print( tbl.dtype.nbytes)
-            ndt = np.dtype(tbl.dtype)
+            #tbl = f.get_node(grp)  # type: Union[Union[RootGroup, object], Any]
+            tbl = f.get_node(grp + "/exprTable")  # '/lab0')
+            #print (type(tbl))
+            print("Table %s" % (grp))
+            #print( tbl.dtype.nbytes)
+            ndt = np.dtype(tbl)
             print(ndt.itemsize)
             self.printDat_It(tbl.iterrows())
-            print("Table %s, len:%d" % (grp, len(tbl)))
+            #print("Table %s, len:%d" % (grp, len(tbl)))
             f.close()
 
     def getTblType(self, grp='/lab0'):
@@ -313,11 +316,11 @@ class hdf5DataTable:
         if 'S11' in enaAttr.keys():
           table_arr.attrs.sparam1 += enaAttr['S11']
         if 'S21' in enaAttr.keys():
-          table_arr.attrs.sparam1 += enaAttr['S21']
+          table_arr.attrs.sparam1 += enaAttr['S21']*2
         if 'S12' in enaAttr.keys():
-          table_arr.attrs.sparam1 += enaAttr['S12']
+          table_arr.attrs.sparam1 += enaAttr['S12']*4
         if 'S22' in enaAttr.keys():
-          table_arr.attrs.sparam1 += enaAttr['S22']
+          table_arr.attrs.sparam1 += enaAttr['S22']*8
 
 
         print("Wrote sample to table:{}, type:{}".format(nData.shape, type(nData)))
@@ -351,20 +354,37 @@ class hdf5DataTable:
         if qStr == '':
             return
         print ("Query String: " + qStr)
-        # rows = tbl.where(qStr)
-        res = []
-        print("unix_timestamp                , Material , Rho , Notes, Data ")
-        print("=============================================================")
-        self.printDat_It(iter(tbl.where(qStr)))
-        '''
-    for x in
-#    print(x[tbl[:])
-       print( "%-16s, %d,  %10s, %0.4f, %-10s, %-20s"%( unixTimePostfix(x['unix_timestamp']), x['session'], x['material1'], x['rho'], "notes...", x['sData'][0,0] ) )
+        rows = tbl.where(qStr)
+        #self.printDat_It(iter(rows))
+#        x =  next(iter(rows))
+        print (tables.description.dtype_from_descr(ExperimentTable))
+        t = tables.description.dtype_from_descr(ExperimentTable)
+        npt =  np.empty((0,24), t )
+        res = pd.DataFrame.from_records(npt[:])
+        #print ("========")
+        #res.set_index("unix_timestamp")
+        #print (res)
+        #print ("========")
+        dataRes = []
+        for i,x in enumerate(iter(rows)): #it:  # tbl.iterrows():
+                #      print(x[tbl[:])
+          res.loc[i] = list(x[:])
+        print (res)
+        print (len(res))
        #res.append(x['session'], x['material'], x['rho'], x['sData']))
-       res.append( {'session': x['session'], 'material':x['material1'], 'concentrate':x['rho'], 'sData':x['sData']})
-    '''
+       #res.append( {'session': x['session'], 'material':x['material1'], 'concentrate':x['rho'], 'sData':x['sData']})
+        
         f.close()
+         
         return res
+
+    def getDataByRef(self, datapath):
+        f = tables.open_file(self.filename, "a", filters=self.Filters)
+        darray = f.get_node('/' + datapath)
+#        dataRes.append(darray)
+        return darray
+
+
 
     def getTimeStamp(self, cmd, param=1):
         if cmd == "All":
