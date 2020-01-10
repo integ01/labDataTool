@@ -27,6 +27,13 @@ class clientRpcAPI():
       #printUsageSelect()
       raise ValueError("GRPC init exception has been caught ")
 
+  def lab_send_cmd(self,  cmd):
+      labCmdParam  = guiRpc_pb2.LabCommand(command = cmd)
+      reply = self.stub.labCmd(labCmdParam)
+      print ("Command reply type:{}".format(reply.cmdType))
+      print ("Command reply:{}".format(reply.cmdReply))
+      return reply.cmdReply
+
   def lab_start_sample(self, enaParams= {}):
     #with self.channel as channel:
       if len(enaParams) >0:
@@ -78,7 +85,6 @@ class clientRpcAPI():
 #def get_data_plot(stub):
 
 
-#def lab_cmd(stub):
 
 
 #def run():

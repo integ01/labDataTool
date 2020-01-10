@@ -19,6 +19,11 @@ class GuiRpcStub(object):
         request_serializer=guiRpc__pb2.ExperimentSetup.SerializeToString,
         response_deserializer=guiRpc__pb2.SampleArray.FromString,
         )
+    self.labCmd = channel.unary_unary(
+        '/guiRpc.GuiRpc/labCmd',
+        request_serializer=guiRpc__pb2.LabCommand.SerializeToString,
+        response_deserializer=guiRpc__pb2.CmdReply.FromString,
+        )
 
 
 class GuiRpcServicer(object):
@@ -33,6 +38,13 @@ class GuiRpcServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def labCmd(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
 
 def add_GuiRpcServicer_to_server(servicer, server):
   rpc_method_handlers = {
@@ -40,6 +52,11 @@ def add_GuiRpcServicer_to_server(servicer, server):
           servicer.startSample,
           request_deserializer=guiRpc__pb2.ExperimentSetup.FromString,
           response_serializer=guiRpc__pb2.SampleArray.SerializeToString,
+      ),
+      'labCmd': grpc.unary_unary_rpc_method_handler(
+          servicer.labCmd,
+          request_deserializer=guiRpc__pb2.LabCommand.FromString,
+          response_serializer=guiRpc__pb2.CmdReply.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(

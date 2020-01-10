@@ -42,8 +42,14 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
       self.vnaMach = vna
       return
 
-#  def getDataPlot(self, request, context):
-#    pass
+   def labCmd(self, request, context):
+
+     print ("Got command : {}".format(request.command ) )
+     reply = self.vnaMach.inst.write(request.command)
+     reply = self.vnaMach.inst.read(request.command)
+     print ("Reply:" + reply)
+     return guiRpc_pb2.CmdReply(cmdReply = reply, cmdType = 1) 
+      #"Lab cmd: %d param:%s === OK."%(request.cmd, request.param1)
 
    def startSample(self, request, context):
      print ("Get request parameters: id:{}, Points:{}, freqStart:{}, freqEnd:{}".format(request.Meas_id, request.NumberOfPoints, request.freq_STAR, request.freq_STOP))
@@ -82,8 +88,6 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
         print ("Got RPC request for Sample, Sample return array len:%d, Freq return len:%d"%(dataB.data_length, ffB.data_length ))
         yield sampleArr
 
-#  def labCmd(self, request, context):
-#    return guiRpc_pb2.STATUS(ret = "Lab cmd: %d param:%s === OK."%(request.cmd, request.param1)
 
 
 

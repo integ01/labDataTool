@@ -181,7 +181,7 @@ def printUsageSelect():
   print ("=======================")
   print ("1. Open Existing DataBase ")
   print ("2. Get Data from Database ")
-  print ("3. VNA setup (TBD)")
+  print ("3. VNA commad setup")
   print ("4. Start Sample")
   print ("5. Query & Plot Data")
   print ("6(TBD). Run Test Script and Save data")
@@ -227,9 +227,14 @@ def main(rpcClient):
          #hdClient = hdf5Client(filepath, filters1)
       elif ( cmd[0] == '2'):
         showSampleParams()
-      elif ( cmd[0] == '6' or cmd[0]=='3'):
+      elif ( cmd[0] == '6'):
         filepath = raw_input ("Enter Sample Parameters file name:")
         cmds = loadScript(filepath)
+      elif ( cmd[0]=='3'):
+        cmd = input ("Enter Command for Vna:")
+        res = rpcClient.lab_send_cmd(cmd)
+        print ("Result of command:" + res)
+
       elif ( cmd[0] == '4'):
       # ['Meas_id', 'ENADataMode', 'NPoints', 'fSTAR', 'fSTOP', 'fCENT', 'fSPAN',
       # 'dFormat', 'S11', 'S21', 'S12', 'S22' ]

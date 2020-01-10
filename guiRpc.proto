@@ -30,7 +30,7 @@ service GuiRpc {
 
   rpc startSample(ExperimentSetup) returns (stream SampleArray) {}
 
- // rpc labCmd(LabCommand) returns (STATUS) {}
+  rpc labCmd(LabCommand) returns (CmdReply) {}
 }
 
 message ByteBlock { 
@@ -38,19 +38,30 @@ message ByteBlock {
   bytes data_bytes =1;
 };
 
-message STATUS {
-  string ret = 1;
+message CmdReply {
+  enum CmdType {
+    Nop = 0;
+    statusStr = 1;
+    dataStr = 2;
+    dataBinary = 3;
+  }
+  CmdType cmdType = 1;
+  string cmdReply = 2;
+  //StreamBytes data = 2;
+  
 }
 
-
+message LabCommand {
+  string command = 1; 
+}
 
 message SampleArray {
   enum SParamType {
     Nop = 0;
     S11 = 1;
     S21 = 2;
-    S12 = 3;
-    S22 = 4;
+    S12 = 4;
+    S22 = 8;
   }
   int32 Meas_id = 1;
   SParamType Sparam = 2;
