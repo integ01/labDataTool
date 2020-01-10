@@ -31,6 +31,9 @@ service GuiRpc {
   rpc startSample(ExperimentSetup) returns (stream SampleArray) {}
 
   rpc labCmd(LabCommand) returns (CmdReply) {}
+
+  // TODO
+  //  rpc setEnaParams(ExperimentSetup) returns () {}
 }
 
 message ByteBlock { 
@@ -51,6 +54,11 @@ message CmdReply {
   
 }
 
+// enum CmdType {
+//    Nop = 0;
+//    query = 1;
+//    read = 2;
+//    write = 3;  }
 message LabCommand {
   string command = 1; 
 }
