@@ -104,16 +104,25 @@ class MainApp(wx.App):
       ip3 = self.m_textIp3.GetValue()
       ip4 = self.m_textIp4.GetValue()
       ip = ip1 + "." + ip2 + "." + ip3 + "." + ip4 + ":50051"
-      print ("VNA Connect event, trying to connect to IP:" + ip)
-      try:
-        self.rpcClient = labDataToolClient.clientRpcAPI(IP_PORT = ip)
-        self.connectState = 1
-        self.m_buttonConnect.SetBackgroundColour('green')
+      print ("connect Button action")
+      if (self.connectState != 0):
+           self.connectState = 0
+           self.m_buttonConnect.SetBackgroundColour('gray')
+      else:
+        try:
+          print ("VNA Connect event, trying to connect to IP:" + ip)
+          self.rpcClient = labDataToolClient.clientRpcAPI(IP_PORT = ip)
+          self.connectState = 1
+          # Test connection
+          res = self.rpcClient.lab_send_cmd("POIN?")
+          print ("Result of command:" + res)
 
-      except ValueError as err:
-        print(err.args)
-        self.connectState = 0
-        self.m_buttonConnect.SetBackgroundColour('gray')
+          self.m_buttonConnect.SetBackgroundColour('green')
+
+        except ValueError as err:
+          print(err.args)
+          self.connectState = 0
+          self.m_buttonConnect.SetBackgroundColour('gray')
 
     def m_buttonStopOnButtonClick( self, event ):
        print ("End of Test")
@@ -167,6 +176,7 @@ class MainApp(wx.App):
 
 
     def m_buttonMeasureOnButtonClick( self, event ):
+      global gEna
       print ("Measure Button Presses")
       #event.Skip()
       print('LabExper0_support.btnMeasurePress')
@@ -175,14 +185,16 @@ class MainApp(wx.App):
         print("Error - Need to start session first")
         return
       setUp = {}
+      #TODO - update setup fields
       setUp['session'] =  self.maxsess +1 #rfSystem.maxsess
       setUp['material'] = self.expr['material1']
       setUp['concentrate'] = self.expr['initConcentrate']
       setUp['notes'] = self.expr['testNotes']
 #      rfSystem.startSample(setUp)
     
-      samplePlot.measureRemoteCall(self.rpcClient)
-
+      if self.rpcClient != None:
+         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp)
+ 
       if self.state == 1:
         self.msgLabStep(0)
       self.state = 2
@@ -266,6 +278,7 @@ if __name__ == '__main__':
     #rpcClient = labDataToolClient.clientRpcAPI() #IP_PORT = 'localhost:50051'
     #main(rpcClient)
 
+    gEna = samplePlot.setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
     appframe = MainApp(False)
     appframe.MainLoop()
 

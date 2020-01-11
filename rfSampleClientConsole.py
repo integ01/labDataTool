@@ -163,7 +163,39 @@ def setEnaParams(paramItems):
        enaP[key] = item
   return enaP
 
-def measureRemoteCall(rpcClient):
+
+def measureRemoteCall(rpcClient, enaSetup, setUp):
+      # ['Meas_id', 'ENADataMode', 'NPoints', 'fSTAR', 'fSTOP', 'fCENT', 'fSPAN',
+      # 'dFormat', 'S11', 'S21', 'S12', 'S22' ]
+        #enaP = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 2, -1, -1])
+        
+        enaSetup['Meas_id'] =  enaSetup['Meas_id'] + 1
+        print (enaSetup)
+        dataSamps, ffs, sampsIDs = rpcClient.lab_start_sample(enaSetup)
+
+        numPoints = dataSamps[0].shape[0]//2
+        print("ff len:",ffs[0].shape)
+        print("numPoints: {}".format(numPoints))
+        print (dataSamps[0].shape)
+        print ("Reply Meas_id, S_type :{}".format(sampsIDs[0]))
+
+        ######## TODO - checkmeasID and S_type match request ena  
+       # setUp['concentrate'] = np.random.uniform()
+
+        complexSamples = [ np.array((samp[0::2] + 1j*samp[1::2])) for samp
+            in dataSamps]
+
+        ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0]}
+        ###### TODO - add connection to db
+        ##hdStore.aggParams2TableWrite(setUp, ndarry, gEna, grp='/lab0') 
+
+        #TODO - add this to the read fields
+        #freqL = np.linspace(2e+9,3e+9,201)
+        plotMeas2('S11', ffs[0], complexSamples[0])
+        plotMeas2('S21', ffs[0], complexSamples[1])
+
+
+def measureRemoteCall_0(rpcClient):
         dataSamps, ffs = rpcClient.lab_start_sample()
         #setUp['concentrate'] = np.random.uniform()
         #hdStore.writeSamples(np.vstack(dataSamps),'/lab0', setUp) 
@@ -197,10 +229,9 @@ def main(rpcClient):
 
   global MOCK
   global hdStore
-
+  global gEna
 
   while (1):
-    global gEna
     printUsageSelect()
     try:
       cmds = []
@@ -341,6 +372,6 @@ def main(rpcClient):
 if __name__ == '__main__':  # You should keep this line for our auto-grading code.
   logging.basicConfig()
   gEna = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
-  rpcClient = labDataToolClient.clientRpcAPI()
+  rpcClient = labDataToolClient.clientRpcAPI('10.0.0.24:50051')
   main(rpcClient)
 
