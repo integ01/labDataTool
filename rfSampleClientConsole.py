@@ -163,8 +163,44 @@ def setEnaParams(paramItems):
        enaP[key] = item
   return enaP
 
+############################
+# query function
+# Input:
+#        hdStore - Hd5 storage class
+#        qstr - query string in pyTables format (sql like)
+#        sp - Sparam to display
+def dbQuery(hdStore, cmd, parami, sp):
+      if cmd[0]=='@':
+          qstr = cmd[1:]
+      else:
+          ts=hdStore.getTimeStamp(cmd, parami)  
+          qstr = "unix_timestamp >= %d"%(ts)
+          print ("Debug: using query"+ qstr)
+      rows = hdStore.query('/lab0/exprTable',qstr)
+      print (rows[:])
+      print ("Found %d entries"%(len(rows)))
+      grlen= min(3, len(rows))
+      print ("Plotting %d entries"%(grlen))
+      dL = []
+      clist = []
+      for i in range(grlen):
+        datapath = rows.loc[i]['dataArrRef'].decode()
+        print (datapath)
+        darray = hdStore.getDataByRef(datapath)
+        print (darray.shape, darray.dtype)
+        print (darray.attrs.sparam1)
+        freqL = darray.attrs.ff
+        dL.append(darray)
+      for data in dL:
+        complex_sample = np.squeeze(data[0, :, sp]) #'sData']
+        #print("Data type on query:", values.dtype) 
+        #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
+        print(complex_sample.shape) 
+        print(type(complex_sample[0]))
+        clist.append(complex_sample)
+      return (freqL, clist)
 
-def measureRemoteCall(rpcClient, enaSetup, setUp):
+def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None):
       # ['Meas_id', 'ENADataMode', 'NPoints', 'fSTAR', 'fSTOP', 'fCENT', 'fSPAN',
       # 'dFormat', 'S11', 'S21', 'S12', 'S22' ]
         #enaP = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 2, -1, -1])
@@ -187,7 +223,8 @@ def measureRemoteCall(rpcClient, enaSetup, setUp):
 
         ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0]}
         ###### TODO - add connection to db
-        ##hdStore.aggParams2TableWrite(setUp, ndarry, gEna, grp='/lab0') 
+        if hdStore != None:
+          hdStore.aggParams2TableWrite(setUp, ndarry, enaSetup, grp='/lab0') 
 
         #TODO - add this to the read fields
         #freqL = np.linspace(2e+9,3e+9,201)
@@ -235,13 +272,14 @@ def main(rpcClient):
     printUsageSelect()
     try:
       cmds = []
-      #cmd = raw_input ("term>")
-      cmd = input ("term>")
+      cmd = raw_input ("term>")
+      #cmd = input ("term>")
       if len(cmd) == 0:
          continue
 #      cmd = input ("term>")
       if ( cmd[0] == '8'):
-         filepath = input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
+         filepath = raw_input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
+         #filepath = input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
          if filepath == '':
             filepath = dataBaseName
          filters1 = tables.Filters(complevel=0)
@@ -249,8 +287,8 @@ def main(rpcClient):
          #hdClient = hdf5Client(filepath, filters1)
          ##hdStore.createH5DataBase(filepath, LOCATIONS) 
       elif ( cmd[0] == '1'):
-         #filepath = raw_input ("Enter Date Base name(Default=%s)"%(dataBaseName))
-         filepath = input ("Enter Date Base name(Default=%s)"%(dataBaseName))
+         filepath = raw_input ("Enter Date Base name(Default=%s)"%(dataBaseName))
+         #filepath = input ("Enter Date Base name(Default=%s)"%(dataBaseName))
          if filepath == '':
             filepath = dataBaseName
          filters1=tables.Filters(complevel=0)
@@ -260,9 +298,10 @@ def main(rpcClient):
         showSampleParams()
       elif ( cmd[0] == '6'):
         filepath = raw_input ("Enter Sample Parameters file name:")
+        #filepath = input ("Enter Sample Parameters file name:")
         cmds = loadScript(filepath)
       elif ( cmd[0]=='3'):
-        cmd = input ("Enter Command for Vna:")
+        cmd = raw_input ("Enter Command for Vna:")
         res = rpcClient.lab_send_cmd(cmd)
         print ("Result of command:" + res)
 
@@ -306,54 +345,29 @@ def main(rpcClient):
 #        writeOps += 1
       elif ( cmd[0] == '7'):
         test_db(hdStoreM, 100)
+      
       elif ( cmd[0] == '5'):
-        parami = 0
         print ("Options: Today, LastHour, LastMinutes, Yesterday, All")
-        cmd = input ("Enter query for DB items (for raw cmd use '@' prefix):")
+        cmd = raw_input ("Enter query for DB items (for raw cmd use '@' prefix):")
+        #cmd = input ("Enter query for DB items (for raw cmd use '@' prefix):")
+        parami = 0
         if len(cmd)== 0:
           cmd='All'
-        if cmd[0]=='@':
-          qstr = cmd[1:]
         else:
           if 'Last' in cmd:
             param = input ("Enter how many:")
             parami = int(param)
-          ts=hdStore.getTimeStamp(cmd, parami)  
-          qstr = "unix_timestamp >= %d"%(ts)
-          print ("Debug: using query"+ qstr)
-          rows = hdStore.query('/lab0/exprTable',qstr)
-          print (rows[:])
-          clist = []
-          print ("Found %d entries"%(len(rows)))
-          grlen= min(3, len(rows))
-          print ("Plotting %d entries"%(grlen))
-          dL = []
-          for i in range(grlen):
-            datapath = rows.loc[i]['dataArrRef'].decode()
-            print (datapath)
-            darray = hdStore.getDataByRef(datapath)
-            print (darray.shape, darray.dtype)
-            print (darray.attrs.sparam1)
-            freqL = darray.attrs.ff
-
-            dL.append(darray)
-          splot = input("Select 1- S11, 2- S21 :")
-          try:
-            sp = int(splot) -1
-          except ValueError:
-            print ("Wrong value -- using Option 1 ")
-            sp = 0
-          if (sp != 0 and sp !=1):
-            print ("Wrong value -- using Option 1 ")
-            sp = 0
-          for data in dL:
-            complex_sample = np.squeeze(data[0, :, sp]) #'sData']
-            #print("Data type on query:", values.dtype) 
-            #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
-            print(complex_sample.shape) 
-            print(type(complex_sample[0]))
-            clist.append(complex_sample)
-          plotMeas(freqL, clist)
+        splot = input("Select 1- S11, 2- S21 :")
+        try:
+          sp = int(splot) -1
+        except ValueError:
+          print ("Wrong value -- using Option 1 ")
+          sp = 0
+        if (sp != 0 and sp !=1):
+          print ("Wrong value -- using Option 1 ")
+          sp = 0
+        freqL, clist = dbQuery(hdStore, cmd, parami, sp)
+        plotMeas(freqL, clist)
       elif ( cmd[0] == '9'):
          print("====== Quiting =========")
          return
@@ -372,6 +386,7 @@ def main(rpcClient):
 if __name__ == '__main__':  # You should keep this line for our auto-grading code.
   logging.basicConfig()
   gEna = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
-  rpcClient = labDataToolClient.clientRpcAPI('10.0.0.24:50051')
+  #rpcClient = labDataToolClient.clientRpcAPI('10.0.0.24:50051')
+  rpcClient = labDataToolClient.clientRpcAPI()
   main(rpcClient)
 

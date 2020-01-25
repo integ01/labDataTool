@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import tables
 # import PyTables
-
+import wx
 import time
 import datetime
 
@@ -18,6 +18,7 @@ from typing import Any, Union
 import pandas as pd
 #SAMPLE_SHAPE = (2, 402)
 MAX_SESS_SAMPLES = 100
+defaultPath = "dataDir"
 dataBaseName = "dataFile0"
 Filters = None
 
@@ -106,8 +107,8 @@ class ExperimentTable(tables.IsDescription):
 
 class hdf5DataTable:
 
-    def __init__(self, dataBase_=dataBaseName, filters=tables.Filters(complevel=0), restore=False):
-        self.data_dir = "dataDir"
+    def __init__(self, path = defaultPath, dataBase_=dataBaseName, filters=tables.Filters(complevel=0), restore=False, console=True, guidlg = None ):
+        self.data_dir = path
         self.Filters = filters
         if os.path.exists(self.data_dir):
             pass  # shutil.rmtree(data_dir)
@@ -116,16 +117,23 @@ class hdf5DataTable:
         filename = self.get_filename(dataBase_, filters)
         filename = os.path.join(self.data_dir, filename)
         self.filename = filename
-        if restore:
+        if console and restore:
             self.printData('/lab0')
         else:
             print ("hdf5 init) Create data Base:" + filename)
             if os.path.exists(filename):
-                #cmd = raw_input("File %s already exists, do you want to erase it and start new?" % (filename))
-                cmd = input("File %s already exists, do you want to erase it and start new?" % (filename))
-                if len(cmd)==0 or (len(cmd)> 0 and cmd[0] != 'y'):
-                    #TODO - add exception here
-                    return
+                if console:
+                  #cmd = raw_input("File %s already exists, do you want to erase it and start new?" % (filename))
+                  cmd = input("File %s already exists, do you want to erase it and start new?" % (filename))
+                  if len(cmd)==0 or (len(cmd)> 0 and cmd[0] != 'y'):
+                      #TODO - add exception here
+                      return
+                elif guidlg != None:
+                   #Ex = ValueError("FileExistError")
+                   #raise Ex
+                  result = guidlg.ShowModal()
+                  if result != wx.ID_YES:
+                    return 
             self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'], filters)
         return
 

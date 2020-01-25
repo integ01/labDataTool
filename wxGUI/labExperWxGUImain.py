@@ -22,6 +22,7 @@ import rfSampleClientConsole as samplePlot
 class MainApp(wx.App):
     def frame_init_(self):
 #        self.res = xrc.XmlResource("dt/mna.xrc")
+        self.hdStore = None
         self.rpcClient = None
         self.res = xrc.XmlResource("mna2.xrc")
         self.frameMain = self.res.LoadFrame(None, "FrameMain")
@@ -29,11 +30,10 @@ class MainApp(wx.App):
         self.panelMain = xrc.XRCCTRL(self.notebook, "m_panelExperiment")
         self.panelVNA = xrc.XRCCTRL(self.notebook, "m_panelVNA")
         self.panelDB = xrc.XRCCTRL(self.notebook, "m_panelDB")
-
         self.m_buttonConnect = xrc.XRCCTRL(self.panelVNA, "m_buttonConnect")
-        self.m_buttonStart = xrc.XRCCTRL(self.panelMain, "m_buttonStart")
         self.m_buttonMeasure = xrc.XRCCTRL(self.panelMain, "m_buttonMeasure")
         self.m_buttonStop = xrc.XRCCTRL(self.panelMain, "m_buttonStop")
+        self.m_buttonStart = xrc.XRCCTRL(self.panelMain, "m_buttonStart")
         self.m_buttonCont = xrc.XRCCTRL(self.panelMain, "m_buttonCont")
 
 
@@ -41,8 +41,34 @@ class MainApp(wx.App):
         self.m_textIp2 = xrc.XRCCTRL(self.panelVNA, "m_textIp2")
         self.m_textIp3 = xrc.XRCCTRL(self.panelVNA, "m_textIp3")
         self.m_textIp4 = xrc.XRCCTRL(self.panelVNA, "m_textIp4")
+        
 
+        self.vna_textNumSamplePoints = xrc.XRCCTRL(self.panelVNA, "m_textCtrlNumSamplePoints")
+        self.vna_textCtrlNumScans = xrc.XRCCTRL(self.panelVNA, 'm_textCtrlNumScans')
+        self.vna_checkBoxS11 = xrc.XRCCTRL(self.panelVNA, 'm_checkBoxS11')
+        self.vna_checkBoxS21 = xrc.XRCCTRL(self.panelVNA, 'm_checkBoxS21')
+        self.vna_checkBoxS12 = xrc.XRCCTRL(self.panelVNA, 'm_checkBoxS12')
+        self.vna_checkBoxS22 = xrc.XRCCTRL(self.panelVNA, 'm_checkBoxS22')
 
+        self.vna_textCtrlFreqStart = xrc.XRCCTRL(self.panelVNA, 'm_textCtrlFreqStart')
+        self.vna_textCtrlFreqEnd = xrc.XRCCTRL(self.panelVNA, 'm_textCtrlFreqEnd')
+        self.vna_textCtrlFreqCenter = xrc.XRCCTRL(self.panelVNA, 'm_textCtrlFreqCenter')
+        self.vna_textCtrlFreqSpan = xrc.XRCCTRL(self.panelVNA, 'm_textCtrlFreqSpan')
+        self.vna_radioBtnSelStartEnd = xrc.XRCCTRL(self.panelVNA, 'm_radioBtnSelStartEnd')
+        self.vna_radioBtnSelCentSpan = xrc.XRCCTRL(self.panelVNA, 'm_radioBtnSelCentSpan')
+        self.vna_buttonVNATest = xrc.XRCCTRL(self.panelVNA, 'm_buttonVNATest')
+
+        self.vna_textCtrlDBFile =  xrc.XRCCTRL(self.panelVNA, 'm_textCtrlDBFile1')
+        self.vna_button6DBFileOpen = xrc.XRCCTRL(self.panelVNA, 'm_button6DBFileOpen1')
+
+        self.db_textCtrlDBFile =  xrc.XRCCTRL(self.panelDB, 'm_textCtrlDBFile')
+        self.db_button6DBFileOpen = xrc.XRCCTRL(self.panelDB, 'm_button6DBFileOpen')
+        self.db_radioTime_Today = xrc.XRCCTRL(self.panelDB, 'm_radioTime_Today')
+        self.db_radioBtnTimeLastHour = xrc.XRCCTRL(self.panelDB, 'm_radioBtnTimeLastHour')
+        self.db_radioBtnTime_All = xrc.XRCCTRL(self.panelDB, 'm_radioBtnTime_All')
+        self.db_radioBtnTime_Min = xrc.XRCCTRL(self.panelDB, 'm_radioBtnTime_Min')
+        self.db_textCtrlDBNumMinutes = xrc.XRCCTRL(self.panelDB, 'm_textCtrlDBNumMinutes')
+        self.db_buttonSearch= xrc.XRCCTRL(self.panelDB, 'm_buttonSearch')
 
         self.m_textTester = xrc.XRCCTRL(self.panelMain, "m_textTester")
         self.m_textNotes = xrc.XRCCTRL(self.panelMain, "m_textNotes")
@@ -57,6 +83,9 @@ class MainApp(wx.App):
         self.m_choiceProcedure = xrc.XRCCTRL(self.panelMain, "m_choiceProcedure")
         self.m_gauge1 = xrc.XRCCTRL(self.panelMain, "m_gauge1")
         self.m_listBox1 = xrc.XRCCTRL(self.panelMain, "m_listBox1")
+        self.dataBaseName = "dataFile0"
+        self.dataBasePath = "../dataDir"
+
     def OnInit(self):
         self.frame_init_()
         #mainFrame = frameMain(self)
@@ -66,6 +95,13 @@ class MainApp(wx.App):
         self.m_buttonStop.Bind( wx.EVT_BUTTON, self.m_buttonStopOnButtonClick )
         self.m_buttonCont.Bind( wx.EVT_BUTTON, self.m_buttonContOnButtonClick )
         self.m_buttonConnect.Bind( wx.EVT_BUTTON, self.m_buttonConnectOnButtonClick )
+        self.db_button6DBFileOpen.Bind(  wx.EVT_BUTTON, self.db_buttonDBFileOpenClick )
+        self.vna_button6DBFileOpen.Bind(  wx.EVT_BUTTON, self.vna_buttonDBFileOpenClick )
+        
+        self.db_buttonSearch.Bind( wx.EVT_BUTTON, self.db_buttonSearchOnButtonClick )
+        self.vna_buttonVNATest.Bind( wx.EVT_BUTTON, self.vna_buttonVNATestOnButtonClick)
+
+
 
         self.frameMain.Show(True)
         self.state  = 0
@@ -77,26 +113,93 @@ class MainApp(wx.App):
         self.m_textSession.WriteText("1")
         self.m_textInitialVol.WriteText("100")
         self.m_textNumMeasures.WriteText("10")
+        self.vna_textCtrlFreqStart.WriteText("500")
+        self.vna_textCtrlFreqEnd.WriteText("3000")
 
         # Set default IP address
-#        self.m_textIp1.WriteText("127")
-#        self.m_textIp2.WriteText("0")
+
+        self.m_textIp1.WriteText("127")
+        self.m_textIp2.WriteText("0")
         self.m_textIp3.WriteText("0")
         self.m_textIp4.WriteText("1")
+        self.db_textCtrlDBFile.WriteText(self.dataBasePath + "/" + self.dataBaseName)
+        self.vna_textCtrlDBFile.WriteText(self.dataBasePath + "/" + self.dataBaseName)
         return True
 
 
-    def msgLabStep(self, i):
-      if i==1:
-        self.m_listBox1.Clear()
-        self.m_listBox1.Append(messages.fixedVolMsgStep[i].format(self.expr['material1'], self.expr['volumeExchange'] ))
-      else:
-        self.m_listBox1.Clear()
-        self.m_listBox1.Append( messages.fixedVolMsgStep[i])
+    def msgLabStep(self, i, msg=''):
+      if msg == '':
+        if i==1:
+          self.m_listBox1.Clear()
+        #self.m_listBox1.Append(messages.fixedVolMsgStep[i].format(self.expr['material1'], self.expr['volumeExchange'] ))
+          msg = messages.fixedVolMsgStep[i].format(self.expr['material1'], self.expr['volumeExchange'] )
+        else:
+          self.m_listBox1.Clear()
+          #self.m_listBox1.Append( messages.fixedVolMsgStep[i])
+          msg =  messages.fixedVolMsgStep[i]
 
+      self.m_listBox1.Append( msg) 
+      wx.MessageBox(msg, 'Info', wx.OK | wx.ICON_INFORMATION)
 
 # Virtual event handlers, overide them in your derived class
 
+    def db_buttonSearchOnButtonClick(self, event):
+        # TODO - add table presentation option
+        parami = 0
+        sp = 0   # TODO Add sparam selection
+        cmd = 'All'
+        if (self.db_radioTime_Today.GetValue()):
+            cmd = 'Today'
+        elif (self.db_radioBtnTimeLastHour.GetValue()):
+            cmd = 'LastHour'
+        elif (self.db_radioBtnTime_All.GetValue()):
+            cmd = 'All'
+        elif (self.db_radioBtnTime_Min.GetValue()):
+            cmd = 'LastMinutes'
+            try:
+              param = self.db_textCtrlDBNumMinutes.GetValue()
+              parami = int(param)
+            except ValueError:
+              print ("Wrong value in Minuts text") 
+        freqL, clist = samplePlot.dbQuery(self.hdStore, cmd, parami, sp)
+        samplePlot.plotMeas(freqL, clist) 
+
+        
+
+
+    def openFileClickCommon(self, filepath):
+      filename = os.path.basename(filepath)
+      filepath = filepath[:-len(filename)-1]
+      if filepath == '':
+            filename = self.dataBaseName
+            filepath = self.dataBasePath
+      print ("DB Open file event:" + filepath + "~~" + filename)
+      filters1=tables.Filters(complevel=0)
+      restore = True
+      try:
+          dlg = wx.MessageDialog(None, "File already exists, do you want to erase it and start new?",'Overwrite',wx.YES_NO | wx.ICON_QUESTION)
+          self.hdStore = hdf5DataTable(filters=filters1, path=filepath, dataBase_=filename, restore=restore, console=False,guidlg=dlg)
+      except Exception as e:
+          print(e, str(e))
+          print("DB Exception" )
+          self.db_button6DBFileOpen.SetBackgroundColour('gray')
+          self.vna_button6DBFileOpen.SetBackgroundColour('gray')
+          return  
+      # End of While 
+      self.db_button6DBFileOpen.SetBackgroundColour('blue')
+      self.vna_button6DBFileOpen.SetBackgroundColour('blue')
+
+    def vna_buttonDBFileOpenClick(self, event):
+      filepath = self.vna_textCtrlDBFile.GetValue()
+      self.db_textCtrlDBFile.SetValue(filepath)
+      self.openFileClickCommon(filepath)
+
+    def db_buttonDBFileOpenClick(self, event):
+      filepath = self.db_textCtrlDBFile.GetValue()
+      self.vna_textCtrlDBFile.SetValue(filepath)
+      self.openFileClickCommon(filepath)
+
+     
     def m_buttonConnectOnButtonClick( self, event ):
              
       ip1 = self.m_textIp1.GetValue()
@@ -108,6 +211,7 @@ class MainApp(wx.App):
       if (self.connectState != 0):
            self.connectState = 0
            self.m_buttonConnect.SetBackgroundColour('gray')
+           del self.rpcClient
       else:
         try:
           print ("VNA Connect event, trying to connect to IP:" + ip)
@@ -115,8 +219,9 @@ class MainApp(wx.App):
           self.connectState = 1
           # Test connection
           res = self.rpcClient.lab_send_cmd("POIN?")
+          self.vna_textNumSamplePoints.WriteText(res)
           print ("Result of command:" + res)
-
+          
           self.m_buttonConnect.SetBackgroundColour('green')
 
         except ValueError as err:
@@ -137,8 +242,10 @@ class MainApp(wx.App):
        #w.btnStart.configure(background=orig_color)
 
 
-       self.m_listBox1.Clear()
-       self.m_listBox1.Append("Test Session End\n==========")
+       #self.m_listBox1.Clear()
+       #self.m_listBox1.Append("Test Session End\n==========")
+
+       msgLabStep(0, msg="Test Session End\n==========")
 
        #rfSystem.getDataPlot('Session', currSess)
 
@@ -173,7 +280,28 @@ class MainApp(wx.App):
       # TODO - add concentration increment
       # w.TextCurrentConc1.insert(1.0, str(expr['mat1Concen']))
 
-
+    def vna_buttonVNATestOnButtonClick(self, event):
+      global gEna
+      print ("Test VNA Measure Button Pressed")
+      #event.Skip()
+      sys.stdout.flush()
+      if self.connectState != 1:
+        print("Error - Need to connect to VNA server first")
+        return
+      ############################3
+      #TODO - update setup fields
+      #############################3
+      setUp = samplePlot.setUp
+      setUp['session'] =  1 #rfSystem.maxsess
+      setUp['component0'] = 'water'
+      setUp['P1'] = 0.1 
+      setUp['misc'] = 'Notes here'
+      setUp['author'] = 'Test author here'
+#      rfSystem.startSample(setUp)
+    
+      if self.rpcClient != None:
+         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp, hdStore=None)
+ 
 
     def m_buttonMeasureOnButtonClick( self, event ):
       global gEna
@@ -184,16 +312,19 @@ class MainApp(wx.App):
       if self.state == 0 or self.state == 2:
         print("Error - Need to start session first")
         return
-      setUp = {}
+      ############################3
       #TODO - update setup fields
+      #############################3
+      setUp = samplePlot.setUp
       setUp['session'] =  self.maxsess +1 #rfSystem.maxsess
-      setUp['material'] = self.expr['material1']
-      setUp['concentrate'] = self.expr['initConcentrate']
-      setUp['notes'] = self.expr['testNotes']
+      setUp['component0'] = self.expr['material1']
+      setUp['P1'] = self.expr['initConcentrate']
+      setUp['misc'] = self.expr['misc']
+      setUp['author'] = self.expr['author']
 #      rfSystem.startSample(setUp)
     
       if self.rpcClient != None:
-         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp)
+         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp, hdStore=self.hdStore)
  
       if self.state == 1:
         self.msgLabStep(0)
@@ -210,12 +341,14 @@ class MainApp(wx.App):
         print ("Wrong State Error")
         return
       #expr = {}
+      #####################################
+      #TODO - fix fields names to new table
       print('LabExper0_support. Start the Experiment')
       #sys.stdout.flush()
-      self.expr['testerName'] = self.m_textTester.GetValue()
-      print ("Tester Name:"+self.expr['testerName'])
-      self.expr['testNotes'] = self.m_textNotes.GetValue()
-      print ("Test Notes:"+ self.expr['testNotes'])
+      self.expr['author'] = self.m_textTester.GetValue()
+      print ("Tester Name:"+self.expr['author'])
+      self.expr['misc'] = self.m_textNotes.GetValue()
+      print ("Test Notes:"+ self.expr['misc'])
       self.expr['stepUpDn'] = self.m_choiceStep.GetSelection()
       print("step:" + str(self.expr['stepUpDn']))
       self.expr['testType'] = self.m_choiceTestType.GetSelection()
@@ -261,9 +394,9 @@ class MainApp(wx.App):
                 print ("Wrong value in {}-- Please Correct ".format(k))
                 return
       self.state = 1
-      self.m_listBox1.Clear()
-      self.m_listBox1.Append(messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
-   
+#      self.m_listBox1.Clear()
+#      self.m_listBox1.Append(messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
+      msgLabStep(0, msg= messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
       #w.btnStart.configure(background="green")
  #    print (w.Checkbutton_DBOK.get("1.0","end-1c"))
 
