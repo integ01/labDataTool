@@ -13,10 +13,13 @@ import numpy as np
 import struct
 
 import vnaGPIBMocMod as vnaMod
+import vna2PortGPIBMod as vnaMod2
+import sys
+
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-MOCK = True
+MOCK = False
 
 hdStore = None
 hp8753 = None
@@ -58,8 +61,15 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
 #     values = query_binary_values( 'OUTPDATA', datatype='d', header_fmt='hp', is_big_endian=True)
      
 #     print ("First data value : %d"%(dataSamp[0,0]))
-     print (dataSamp[0][0])
-     sType = [guiRpc_pb2.SampleArray.S11, guiRpc_pb2.SampleArray.S21]
+     ##TODO - check this more 
+     # request.Sparam1 should be 2 
+     numSamps = len(dataSamp)//request.Sparam1 
+     sType = [guiRpc_pb2.SampleArray.S11]*numSamps+ [guiRpc_pb2.SampleArray.S21]*numSamps
+     ####
+     print (numSamps)
+     print (dataSamp[0].shape)
+     print (dataSamp[0].dtype)
+
      for i, arr_i in enumerate(dataSamp):
         byt1 = bytearray([])
         for b in list(arr_i):
@@ -111,11 +121,30 @@ if __name__ == '__main__':
  # global hp8753Mock
  # global hp8753
 
-  hp8753Mock = vnaMod.vnaHP8753C_GpibMock(Addr=16)
+  if hasattr(__builtins__, 'raw_input'): 
+   input = raw_input
+  
+  MOCK = False
+  if len(sys.argv)>1:
+    if 'M' in sys.argv[1]: 
+      MOCK=True
+
+  if not MOCK:
+    try:
+      hp8753 = vnaMod2.vnaHP8753C_Gpib(Addr=16, numSamples_=2)
+    except:
+      print ("Unexpected error:", sys.exc_info()[0])
+      print ("Probably your Network Analyzer is not powered up or initialized")
+      
+      sel = input("Do you want to work in Mocked mode?[Y/n]")
+      if sel == '' or sel == 'Y':
+         MOCK = True
+      else:
+         exit()
   if MOCK:
+      hp8753Mock = vnaMod.vnaHP8753C_GpibMock(Addr=16)
       hp8753 = hp8753Mock 
- # else:
- #   hp8753 = vnaHP8753C_Gpib(Addr=16, numSamples_=10)
+
 
   logging.basicConfig()
   serve()

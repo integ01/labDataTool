@@ -5,7 +5,6 @@ import h5py
 import numpy as np
 import tables
 # import PyTables
-import wx
 import time
 import datetime
 
@@ -14,7 +13,7 @@ import os
 import shutil
 
 from tables.group import RootGroup
-from typing import Any, Union
+#from typing import Any, Union
 import pandas as pd
 #SAMPLE_SHAPE = (2, 402)
 MAX_SESS_SAMPLES = 100
@@ -120,10 +119,10 @@ class hdf5DataTable:
         if console and restore:
             self.printData('/lab0')
         else:
+            import wx
             print ("hdf5 init) Create data Base:" + filename)
             if os.path.exists(filename):
                 if console:
-                  #cmd = raw_input("File %s already exists, do you want to erase it and start new?" % (filename))
                   cmd = input("File %s already exists, do you want to erase it and start new?" % (filename))
                   if len(cmd)==0 or (len(cmd)> 0 and cmd[0] != 'y'):
                       #TODO - add exception here

@@ -272,14 +272,13 @@ def main(rpcClient):
     printUsageSelect()
     try:
       cmds = []
-      cmd = raw_input ("term>")
-      #cmd = input ("term>")
+   
+      cmd = input ("term>")
       if len(cmd) == 0:
          continue
 #      cmd = input ("term>")
       if ( cmd[0] == '8'):
-         filepath = raw_input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
-         #filepath = input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
+         filepath = input ("Enter New Date Base name(Default=%s)"%(dataBaseName))
          if filepath == '':
             filepath = dataBaseName
          filters1 = tables.Filters(complevel=0)
@@ -287,8 +286,7 @@ def main(rpcClient):
          #hdClient = hdf5Client(filepath, filters1)
          ##hdStore.createH5DataBase(filepath, LOCATIONS) 
       elif ( cmd[0] == '1'):
-         filepath = raw_input ("Enter Date Base name(Default=%s)"%(dataBaseName))
-         #filepath = input ("Enter Date Base name(Default=%s)"%(dataBaseName))
+         filepath = input ("Enter Date Base name(Default=%s)"%(dataBaseName))
          if filepath == '':
             filepath = dataBaseName
          filters1=tables.Filters(complevel=0)
@@ -297,11 +295,10 @@ def main(rpcClient):
       elif ( cmd[0] == '2'):
         showSampleParams()
       elif ( cmd[0] == '6'):
-        filepath = raw_input ("Enter Sample Parameters file name:")
-        #filepath = input ("Enter Sample Parameters file name:")
+        filepath = input ("Enter Sample Parameters file name:")
         cmds = loadScript(filepath)
       elif ( cmd[0]=='3'):
-        cmd = raw_input ("Enter Command for Vna:")
+        cmd = input ("Enter Command for Vna:")
         res = rpcClient.lab_send_cmd(cmd)
         print ("Result of command:" + res)
 
@@ -348,8 +345,7 @@ def main(rpcClient):
       
       elif ( cmd[0] == '5'):
         print ("Options: Today, LastHour, LastMinutes, Yesterday, All")
-        cmd = raw_input ("Enter query for DB items (for raw cmd use '@' prefix):")
-        #cmd = input ("Enter query for DB items (for raw cmd use '@' prefix):")
+        cmd = input ("Enter query for DB items (for raw cmd use '@' prefix):")
         parami = 0
         if len(cmd)== 0:
           cmd='All'
@@ -384,9 +380,11 @@ def main(rpcClient):
 
 
 if __name__ == '__main__':  # You should keep this line for our auto-grading code.
+
+  if hasattr(__builtins__, 'raw_input'): 
+   input = raw_input
   logging.basicConfig()
   gEna = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
-  #rpcClient = labDataToolClient.clientRpcAPI('10.0.0.24:50051')
-  rpcClient = labDataToolClient.clientRpcAPI()
+  rpcClient = labDataToolClient.clientRpcAPI() #'10.0.0.24:50051')
   main(rpcClient)
 

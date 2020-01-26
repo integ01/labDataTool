@@ -9,10 +9,8 @@ import numpy as np
 
 
 TIMEOUT = 3.0#0.8805
-complex_sample_list = []
-complex_sample_listj = []
-complex_sample_list2 = []
-complex_sample_list2j = []
+valuesList1 = []
+valuesList2 = []
 SAMPLES = 10
 count = 0
 #tl = Timeloop()
@@ -40,7 +38,6 @@ def measureSweepBinary():
 
 #@tl.job(interval=timedelta(seconds=TIMEOUT))
 def samplePoints():
-  global complex_sample_list
   global TIMEOUT
   global count
 
@@ -48,17 +45,14 @@ def samplePoints():
   # Sample data
   inst.query('OPC?;SING;')
   values = inst.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)
-  #complex_sample_list.append( np.array([ values[i*2]+ 1j*values[i*2+1] for i in range(len(values)/2)]) )
-  complex_sample_list.append([ values[i*2]+ 1j*values[i*2+1] for i in range(len(values)/2)])
+  valuesList1.append(values)
   print ("{0}: Add Sample, time {1}".format(numSamples-count, time.time()) )
  
 
 #@tl.job(interval=timedelta(seconds=TIMEOUT))
 def twoPortSample():
-  global complex_sample_list
-  global complex_sample_listj
-  global complex_sample_list2
-  global complex_sample_list2j
+  global valuesList1
+  global valuesList2
   global count
   global INST
   
@@ -70,10 +64,8 @@ def twoPortSample():
   values1 = INST.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)
   INST.write('CHAN2')
 
-  complex_sample_list.append([ values1[i*2] for i in range(len(values1)/2)])
-  complex_sample_listj.append([ values1[i*2+1] for i in range(len(values1)/2)])
-  complex_sample_list2.append([ values2[i*2] for i in range(len(values2)/2)])
-  complex_sample_list2j.append([ values2[i*2+1] for i in range(len(values2)/2)])
+  valuesList1.append(values1)
+  valuesList2.append(values2)
   print ("{0}: Add Sample, time {1:f}".format(SAMPLES-count, time.time()) )
 
  
@@ -103,7 +95,10 @@ class vnaHP8753C_Gpib:
   #TODO-set points to 128
        pointStr = self.inst.read() #"POIN {0};".format(numpoints)
        print ("Number of Point to Read Per Sample: ", pointStr)
- 
+       try:
+        self.nPoints =  float(pointStr)
+       except:
+          print ("Points string conversion error")
        # Get Frequency list
        self.inst.write("OUTPLIML;")
        self.inst.write('FORM3')
@@ -113,9 +108,9 @@ class vnaHP8753C_Gpib:
        freqLst = freqLst[:-1]
        #print (freqLst)
        self.freqL = [ float(freqLst[i*4]) for i in range(len(freqLst)//4)]
-       self.complex_sample_list = None #np.array(None)
 #       self.count = numSamples_
        self.numSamples = numSamples_
+
        self.twoPortSetup()
 
   def twoPortSetup(self):
@@ -126,11 +121,17 @@ class vnaHP8753C_Gpib:
     self.inst.write('FORM3')
     self.inst.write('STAR2GHZ')
 
-  def getFreqList(self):
+  def setFreqList(self, nPoints):
+
+    self.inst.write("POIN?;")
+  #TODO-set points 
+    pointStr = self.inst.read()#"POIN {0};".format(numpoints)
+    print ("Number of Point to Read Per Sample: ", pointStr)
+
   # Get Frequency list
     self.inst.write("OUTPLIML;")
     self.inst.write('FORM3')
-    freqStr = inst.read_raw()
+    freqStr = self.inst.read_raw()
     freqStr = freqStr.replace('\n', ', ')
     freqLst = freqStr.split(",")
 
@@ -146,18 +147,17 @@ class vnaHP8753C_Gpib:
 #########################
 #   def startSample()
 #
-  def startSample(self):
+  def startSample(self, nPoints=201):
     global count
-    global complex_sample_list
-    global complex_sample_listj
-    global complex_sample_list2
-    global complex_sample_list2j
-
+    global valuesList1
+    global valuesList2
+    
+    if self.nPoints != nPoints: 
+      self.setFreqList(nPoints)
+      self.nPoints = nPoints
     count = self.numSamples
-    complex_sample_list = []
-    complex_sample_listj = []
-    complex_sample_list2 = []
-    complex_sample_list2j = []
+    valuesList1 = []
+    valuesList2 = []
 
     print ("Number of Samples to Read :", self.numSamples)
     '''
@@ -173,26 +173,22 @@ class vnaHP8753C_Gpib:
        else: break
 
     print("\nStop Scheduler --> Going to average data")
-    if len(complex_sample_list)  == 0:
+    if len(valuesList1)  == 0:
       print "Error - No samples collected"
       return None
     else: 
-      sample_arr =  np.array(complex_sample_list)
-      print ("Got samples array shape: {0}".format(sample_arr.shape))
-      sampAvg = np.mean(sample_arr, axis=0)
-      sample_arrj =  np.array(complex_sample_listj)
-      sampAvgj = np.mean(sample_arrj, axis=0)
-      
-      sample_arr2 =  np.array(complex_sample_list2)
-      print ("Got samples array shape: {0}".format(sample_arr2.shape))
-      sampAvg2 = np.mean(sample_arr2, axis=0)
-      sample_arr2j =  np.array(complex_sample_list2j)
-      sampAvg2j = np.mean(sample_arr2j, axis=0)
+      print ("Got samples {0}, array size: {0}".format( len(valuesList1), 
+       len(valuesList1[0]) ) )
+#      print ("Got samples array shape: {0}".format(valueist2[0].shape))
      
       print ("Done\n-----")
-      cmd = raw_input ("<< Press Enter to continue to plot graph >> ")
-   
-      return np.vstack((sampAvg, sampAvgj, sampAvg2, sampAvg2j))
+      #cmd = raw_input ("<< Press Enter to continue to plot graph >> ")
+      valarr1 = [ np.array((valItem)) for valItem in valuesList1]
+      valarr2 = [ np.array((valItem)) for valItem in valuesList2]
+      print ("Got samples value array shape: {0}".format(valarr1[0].shape))
+  
+      return valarr1 + valarr2
+#      return np.vstack((sampAvg, sampAvgj, sampAvg2, sampAvg2j))
  #     plotMeas2('S21', freqL, sampAvg)
  #     plotMeas2('S11', freqL, sampAvg2)
 
