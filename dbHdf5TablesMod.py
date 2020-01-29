@@ -221,7 +221,8 @@ class hdf5DataTable:
   # In:
   #   dbHdf - instance of class Hdf5TablesMod
   #   setUp - Dict with class 'ExperimentTable' fields and their values
-  #   ndarry - Dict with numpy arrays of sampled data - 'raw', 'ff'
+  #   ndarry - Dict with numpy arrays of sampled data - 'raw', 'ff',  
+  #            'offset'- dictionary offsets of Sparameters.
   #   enaAttr - vna machine setup attribures
   #   grp - hdf5 directory path base
   # global session
@@ -242,7 +243,7 @@ class hdf5DataTable:
       nData = ndarry['raw']
       print(nData.dtype, nData.shape)
       enaAttr['ff'] = ndarry['ff']
-
+      enaAttr['offset'] = ndarry['offset']
       now = datetime.datetime.fromtimestamp(time.time())
       postfixDate = now.strftime("%Y%m%d")
       dataGrp = "data_" + postfixDate
@@ -319,15 +320,20 @@ class hdf5DataTable:
           table_arr.attrs.spanFreq = enaAttr['SPAN']
         if 'ff' in enaAttr.keys():
           table_arr.attrs.ff = enaAttr['ff']
-        table_arr.attrs.sparam1 = 0
-        if 'S11' in enaAttr.keys():
-          table_arr.attrs.sparam1 += enaAttr['S11']
-        if 'S21' in enaAttr.keys():
-          table_arr.attrs.sparam1 += enaAttr['S21']*2
-        if 'S12' in enaAttr.keys():
-          table_arr.attrs.sparam1 += enaAttr['S12']*4
-        if 'S22' in enaAttr.keys():
-          table_arr.attrs.sparam1 += enaAttr['S22']*8
+          print ("Write Attribus ff: {}-{}".format(enaAttr['ff'][0], enaAttr['ff'][-1]))
+        if 'offset' in enaAttr.keys():
+          table_arr.attrs.sparamOffset = enaAttr['offset']
+          print ("Write Attribus sparamOffsets: {}".format(enaAttr['offset']))
+
+
+#        if 'S11' in enaAttr.keys():
+#          table_arr.attrs.sparam1 += enaAttr['S11']
+#        if 'S21' in enaAttr.keys():
+#          table_arr.attrs.sparam1 += enaAttr['S21']*2
+#        if 'S12' in enaAttr.keys():
+#          table_arr.attrs.sparam1 += enaAttr['S12']*4
+#        if 'S22' in enaAttr.keys():
+#          table_arr.attrs.sparam1 += enaAttr['S22']*8
 
 
         print("Wrote sample to table:{}, type:{}".format(nData.shape, type(nData)))

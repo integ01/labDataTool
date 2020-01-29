@@ -15,7 +15,7 @@
 				<object class="wxNotebook" name="m_notebook1">
 					<object class="notebookpage">
 						<label>VNA</label>
-						<selected>1</selected>
+						<selected>0</selected>
 						<object class="wxPanel" name="m_panelVNA">
 							<style>wxTAB_TRAVERSAL</style>
 							<object class="wxBoxSizer">
@@ -1559,6 +1559,38 @@
 															</object>
 														</object>
 													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="notebookpage">
+						<label>Data Table</label>
+						<selected>1</selected>
+						<object class="wxPanel" name="m_panelDBTable">
+							<style>wxTAB_TRAVERSAL</style>
+							<object class="wxBoxSizer">
+								<orient>wxVERTICAL</orient>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxVERTICAL</orient>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxEXPAND</flag>
+											<border>5</border>
+											<object class="wxBoxSizer">
+												<orient>wxVERTICAL</orient>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxGrid" name="m_gridDataTable" />
 												</object>
 											</object>
 										</object>

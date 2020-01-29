@@ -1,5 +1,6 @@
 
 import wx
+import wx.grid
 from wx import xrc
 
 
@@ -24,12 +25,24 @@ class MainApp(wx.App):
 #        self.res = xrc.XmlResource("dt/mna.xrc")
         self.hdStore = None
         self.rpcClient = None
+        self.nPoints = 0
+        self.nScans = 10
+        self.freqStart =0
+        self.freqStop =0
+        self.freqCent=0
+        self.freqSpan=0
+        self.S11 = 0
+        self.S21 = 0
+        self.S12 = 0
+        self.S22 = 0
+
         self.res = xrc.XmlResource("mna2.xrc")
         self.frameMain = self.res.LoadFrame(None, "FrameMain")
         self.notebook = xrc.XRCCTRL(self.frameMain, "m_notebook1")
         self.panelMain = xrc.XRCCTRL(self.notebook, "m_panelExperiment")
         self.panelVNA = xrc.XRCCTRL(self.notebook, "m_panelVNA")
         self.panelDB = xrc.XRCCTRL(self.notebook, "m_panelDB")
+        self.panelDBTbl = xrc.XRCCTRL(self.notebook, "m_panelDBTable")
         self.m_buttonConnect = xrc.XRCCTRL(self.panelVNA, "m_buttonConnect")
         self.m_buttonMeasure = xrc.XRCCTRL(self.panelMain, "m_buttonMeasure")
         self.m_buttonStop = xrc.XRCCTRL(self.panelMain, "m_buttonStop")
@@ -69,6 +82,38 @@ class MainApp(wx.App):
         self.db_radioBtnTime_Min = xrc.XRCCTRL(self.panelDB, 'm_radioBtnTime_Min')
         self.db_textCtrlDBNumMinutes = xrc.XRCCTRL(self.panelDB, 'm_textCtrlDBNumMinutes')
         self.db_buttonSearch= xrc.XRCCTRL(self.panelDB, 'm_buttonSearch')
+
+        self.m_gridDataTable = xrc.XRCCTRL(self.panelDBTbl, "m_gridDataTable")
+	# Grid
+        print (type(self.m_gridDataTable ))
+        self.m_gridDataTable.CreateGrid( 28, 11 )
+        self.m_gridDataTable.EnableEditing( True )
+        self.m_gridDataTable.EnableGridLines( True )
+        self.m_gridDataTable.EnableDragGridSize( False )
+        self.m_gridDataTable.SetMargins( 0, 0 )
+ 
+	# Columns
+	self.m_gridDataTable.EnableDragColMove( False )
+	self.m_gridDataTable.EnableDragColSize( True )
+	self.m_gridDataTable.SetColLabelSize( 30 )
+	self.m_gridDataTable.SetColLabelValue( 0, u"Date" )
+	self.m_gridDataTable.SetColLabelValue( 1, u"Session" )
+	self.m_gridDataTable.SetColLabelValue( 2, u"Author" )
+	self.m_gridDataTable.SetColLabelValue( 3, u"Base" )
+	self.m_gridDataTable.SetColLabelValue( 4, u"Comp 1" )
+	self.m_gridDataTable.SetColLabelValue( 5, u"Comp 2" )
+	self.m_gridDataTable.SetColLabelValue( 6, u"Comp 3" )
+	self.m_gridDataTable.SetColLabelValue( 7, u"P1" )
+	self.m_gridDataTable.SetColLabelValue( 8, u"P2" )
+	self.m_gridDataTable.SetColLabelValue( 9, u"P3" )
+	self.m_gridDataTable.SetColLabelValue( 10, u"H5Path" )
+	self.m_gridDataTable.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+
+	# Rows
+	self.m_gridDataTable.EnableDragRowSize( True )
+	self.m_gridDataTable.SetRowLabelSize( 80 )
+	self.m_gridDataTable.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+
 
         self.m_textTester = xrc.XRCCTRL(self.panelMain, "m_textTester")
         self.m_textNotes = xrc.XRCCTRL(self.panelMain, "m_textNotes")
@@ -124,6 +169,12 @@ class MainApp(wx.App):
         self.m_textIp4.WriteText("1")
         self.db_textCtrlDBFile.WriteText(self.dataBasePath + "/" + self.dataBaseName)
         self.vna_textCtrlDBFile.WriteText(self.dataBasePath + "/" + self.dataBaseName)
+        self.vna_textCtrlNumScans.WriteText(str(self.nScans))
+        self.vna_checkBoxS11.SetValue(True)
+        self.vna_checkBoxS21.SetValue(True)
+
+        #self.m_gridDataTable.AppendRows(1)
+      
         return True
 
 
@@ -165,6 +216,36 @@ class MainApp(wx.App):
         samplePlot.plotMeas(freqL, clist) 
 
         
+    def getVNAFields(self):    
+      try:
+#        self.nPoints = int(self.vna_textNumSamplePoints.GetValue())
+#        self.nScans = int(self.vna_textCtrlNumScans.GetValue())
+#        print(str(self.vna_radioBtnSelStartEnd.GetSelection()))
+        print ("Start getVNAFields")
+        print(self.vna_radioBtnSelStartEnd.GetValue())
+        if self.vna_radioBtnSelStartEnd.GetValue():
+          print ("VNA fields select freqStart/Stop") 
+          print(self.vna_textCtrlFreqStart.GetValue())
+          print(self.vna_textCtrlFreqEnd.GetValue())
+          self.freqStart = int(self.vna_textCtrlFreqStart.GetValue())
+          self.freqStop = int(self.vna_textCtrlFreqEnd.GetValue())
+          self.freqCent = 0
+          self.freqSpan = 0
+
+        else:
+          print ("VNA fields select freqCent/Span") 
+          self.freqStart = 0
+          self.freqStop = 0
+          self.freqCent = int(self.vna_textCtrlFreqCenter.GetValue())
+          self.freqSpan = int(self.vna_textCtrlFreqSpan.GetValue())
+
+        self.S11 = self.vna_checkBoxS11.GetValue()
+        self.S21 = self.vna_checkBoxS21.GetValue()
+        self.S12 = self.vna_checkBoxS12.GetValue()
+        self.S22 = self.vna_checkBoxS22.GetValue()
+      except:
+        print ("GUI Error in VNA fields values")
+
 
 
     def openFileClickCommon(self, filepath):
@@ -177,7 +258,7 @@ class MainApp(wx.App):
       filters1=tables.Filters(complevel=0)
       restore = True
       try:
-          dlg = wx.MessageDialog(None, "File already exists, do you want to erase it and start new?",'Overwrite',wx.YES_NO | wx.ICON_QUESTION)
+          dlg = wx.MessageDialog(None, "File already exists, do you want to overwrite it?",'Overwrite', wx.YES_NO | wx.NO_DEFAULT|wx.ICON_QUESTION)
           self.hdStore = hdf5DataTable(filters=filters1, path=filepath, dataBase_=filename, restore=restore, console=False,guidlg=dlg)
       except Exception as e:
           print(e, str(e))
@@ -219,7 +300,12 @@ class MainApp(wx.App):
           self.connectState = 1
           # Test connection
           res = self.rpcClient.lab_send_cmd("POIN?")
-          self.vna_textNumSamplePoints.WriteText(res)
+          try:
+            self.nPoints = int(float(res))
+          except:
+            print ("Result of command:" + res + ", cannot convert to int")
+          self.vna_textNumSamplePoints.Clear()
+          self.vna_textNumSamplePoints.WriteText(str(self.nPoints))
           print ("Result of command:" + res)
           
           self.m_buttonConnect.SetBackgroundColour('green')
@@ -245,7 +331,7 @@ class MainApp(wx.App):
        #self.m_listBox1.Clear()
        #self.m_listBox1.Append("Test Session End\n==========")
 
-       msgLabStep(0, msg="Test Session End\n==========")
+       self.msgLabStep(0, msg="Test Session End\n==========")
 
        #rfSystem.getDataPlot('Session', currSess)
 
@@ -298,7 +384,19 @@ class MainApp(wx.App):
       setUp['misc'] = 'Notes here'
       setUp['author'] = 'Test author here'
 #      rfSystem.startSample(setUp)
-    
+      self.getVNAFields()
+      gEna['NumOfPoints'] = self.nPoints
+      gEna['NumOfScans'] = self.nScans
+      gEna['freq_STAR'] = self.freqStart
+      gEna['freq_STOP'] = self.freqStop
+      gEna['freq_CENT'] = self.freqCent
+      gEna['freq_SPAN'] = self.freqSpan
+      gEna['S11'] = int(self.S11)
+      gEna['S21'] = int(self.S21)*2
+      gEna['S12'] = int(self.S12)*4
+      gEna['S22'] = int(self.S22)*8
+
+ 
       if self.rpcClient != None:
          samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp, hdStore=None)
  
@@ -396,7 +494,7 @@ class MainApp(wx.App):
       self.state = 1
 #      self.m_listBox1.Clear()
 #      self.m_listBox1.Append(messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
-      msgLabStep(0, msg= messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
+      self.msgLabStep(0, msg= messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
       #w.btnStart.configure(background="green")
  #    print (w.Checkbutton_DBOK.get("1.0","end-1c"))
 

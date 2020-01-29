@@ -18,6 +18,7 @@ import sys
 #sys.path.append("../HDF/")
 #from dbHdf5TablesMod_v2_3 import hdf5DataTable
 from dbHdf5TablesMod import hdf5DataTable
+import guiRpc_pb2
 
 import matplotlib.pyplot as plt
 ### Unix time : time.time()
@@ -152,6 +153,7 @@ def plotMeas2(title, w_,X_):
   plt.show()
 
 def setEnaParams(paramItems):
+  #TODO - Add number of scans
   enaParamKeys = ['Meas_id', 'ENADataMode', 'NumOfPoints', 'freq_STAR',
                      'freq_STOP', 'freq_CENT', 'freq_SPAN', 'dataFormat', 
                       'S11', 'S21', 'S12', 'S22' ]
@@ -188,7 +190,7 @@ def dbQuery(hdStore, cmd, parami, sp):
         print (datapath)
         darray = hdStore.getDataByRef(datapath)
         print (darray.shape, darray.dtype)
-        print (darray.attrs.sparam1)
+        print (darray.attrs.sparamOffset)
         freqL = darray.attrs.ff
         dL.append(darray)
       for data in dL:
@@ -207,29 +209,56 @@ def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None):
         
         enaSetup['Meas_id'] =  enaSetup['Meas_id'] + 1
         print (enaSetup)
-        dataSamps, ffs, sampsIDs = rpcClient.lab_start_sample(enaSetup)
+        dataSamps, ffs, sampsIDs = rpcClient.lab_start_sample(enaParams=enaSetup)
 
         numPoints = dataSamps[0].shape[0]//2
         print("ff len:",ffs[0].shape)
         print("numPoints: {}".format(numPoints))
         print (dataSamps[0].shape)
         print ("Reply Meas_id, S_type :{}".format(sampsIDs[0]))
-
+        complexSamples11 = []
+        complexSamples21 = []
+        complexSamples12 = []
+        complexSamples22 = []
         ######## TODO - checkmeasID and S_type match request ena  
        # setUp['concentrate'] = np.random.uniform()
+        for samp, sampId in zip(dataSamps, sampsIDs):
+          if sampId[1] == guiRpc_pb2.SampleArray.S11:
+             complexSamples11.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
+          if sampId[1] == guiRpc_pb2.SampleArray.S21:
+             complexSamples21.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
+          if sampId[1] == guiRpc_pb2.SampleArray.S12:
+             complexSamples12.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
+          if sampId[1] == guiRpc_pb2.SampleArray.S22:
+             complexSamples22.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
+        offsetS11 = 0 if len(complexSamples11)>0 else -1
+        offSum = len(complexSamples11)
+        offsetS21 = offSum if len(complexSamples21)>0 else -1
+        offSum += len(complexSamples21)
+        offsetS12 = offSum if len(complexSamples12)>0 else -1
+        offSum += len(complexSamples12)
+        offsetS22 = offSum if len(complexSamples22)>0 else -1
+        offSum += len(complexSamples22)
 
-        complexSamples = [ np.array((samp[0::2] + 1j*samp[1::2])) for samp
-            in dataSamps]
-
-        ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0]}
+        print ("samplesS11 #:{}".format( len(complexSamples11)))
+        print ("samplesS21 #:{}".format( len(complexSamples21)))
+        print ("samplesS12 #:{}".format( len(complexSamples12)))
+        print ("samplesS22 #:{}".format( len(complexSamples22)))
+        complexSamples = complexSamples11 +  complexSamples21 +  complexSamples12 +  complexSamples22
+        samplesOffIndex = {"S11":  offsetS11, "S21": offsetS21, 
+        "S12":  offsetS12, "S22": offsetS22 }
+                         
+        ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0], 'offset':samplesOffIndex }
+        print (ndarry['raw'].shape)
         ###### TODO - add connection to db
         if hdStore != None:
           hdStore.aggParams2TableWrite(setUp, ndarry, enaSetup, grp='/lab0') 
 
         #TODO - add this to the read fields
         #freqL = np.linspace(2e+9,3e+9,201)
-        plotMeas2('S11', ffs[0], complexSamples[0])
-        plotMeas2('S21', ffs[0], complexSamples[1])
+        plotMeas2('S11', ffs[0], complexSamples[samplesOffIndex["S11"]])
+        plotMeas2('S21', ffs[0], complexSamples[samplesOffIndex["S21"]])
+#        plotMeas2('S21', ffs[0], complexSamples[1])
 
 
 def measureRemoteCall_0(rpcClient):
@@ -329,12 +358,7 @@ def main(rpcClient):
         ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0]}
         hdStore.aggParams2TableWrite(setUp, ndarry, gEna, grp='/lab0') 
 
-#        complex_sample21 = np.empty((numPoints),dtype=complex128)
-#        complex_sample11 = np.empty((numPoints),dtype=complex128)
-#        complex_sample21[:] = (dataSamps[0])[0::2] + 1j*(dataSamps[0])[1::2]
-#        complex_sample11[:] = (dataSamps[1])[0::2] + 1j*(dataSamps[1])[1::2]
-        #TODO - add this to the read fields
-        #freqL = np.linspace(2e+9,3e+9,201)
+        # TODO - get S21/S11 measurments correct offsets
         plotMeas2('S11', ffs[0], complexSamples[0])
         plotMeas2('S21', ffs[0], complexSamples[1])
 
@@ -385,6 +409,6 @@ if __name__ == '__main__':  # You should keep this line for our auto-grading cod
    input = raw_input
   logging.basicConfig()
   gEna = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
-  rpcClient = labDataToolClient.clientRpcAPI() #'10.0.0.24:50051')
+  rpcClient = labDataToolClient.clientRpcAPI('192.168.1.102:50051')
   main(rpcClient)
 

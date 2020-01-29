@@ -75,6 +75,7 @@ class clientRpcAPI():
 #        sampleNp = np.empty((402),dtype=np.dtype('f8') )
 
         ffNp = np.frombuffer(sample.ff.data_bytes, dtype=np.float32)
+        print ("ff freq range: {} - {}".format(ffNp[0], ffNp[-1]))
         sampleNp = np.frombuffer(sample.data.data_bytes, dtype=np.float64)
         samplesNp.append(sampleNp)
         samplesId.append((sample.Meas_id, sample.Sparam))

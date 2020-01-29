@@ -135,8 +135,8 @@ class vnaHP8753C_Gpib:
     freqStr = freqStr.replace('\n', ', ')
     freqLst = freqStr.split(",")
 
-    freqL = [ float(freqLst[i*4]) for i in range(len(freqLst)/4)]
-    return freqL
+    self.freqL = [ float(freqLst[i*4]) for i in range(len(freqLst)/4)]
+    return self.freqL
 
 
   #print("FreqL",len(compVal2))

@@ -48,25 +48,63 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
    def labCmd(self, request, context):
 
      print ("Got command : {}".format(request.command ) )
-     reply = self.vnaMach.inst.write(request.command)
-     reply = self.vnaMach.inst.read(request.command)
+#     reply = self.vnaMach.inst.write(request.command)
+#     reply = self.vnaMach.inst.read(request.command)
+     reply = self.vnaMach.inst.query(request.command)
      print ("Reply:" + reply)
      return guiRpc_pb2.CmdReply(cmdReply = reply, cmdType = 1) 
       #"Lab cmd: %d param:%s === OK."%(request.cmd, request.param1)
 
+   #################################################################
+   # startSample()
+   # 
+   # Input: request:
+   # Output: Sample Data ... TODO
+   #
    def startSample(self, request, context):
      print ("Get request parameters: id:{}, Points:{}, freqStart:{}, freqEnd:{}".format(request.Meas_id, request.NumberOfPoints, request.freq_STAR, request.freq_STOP))
      print ("Get request Sparams : {}".format(request.Sparam1 ) )
+     print ("Set Start End Freqs")
+
+     cmdStart = "STAR {}.E+6;".format(int(request.freq_STAR))
+     cmdStop = "STOP {}.E+6;".format(int(request.freq_STOP))
+     print(cmdStart,cmdStop)
+     self.vnaMach.inst.write("STAR {}.E+6;".format(int(request.freq_STAR)))
+     self.vnaMach.inst.write("STOP {}.E+6;".format(int(request.freq_STOP)))
+     self.vnaMach.setFreqList(201)
+     ###### 
+     # Get sampls from vna 
      dataSamp = self.vnaMach.startSample(nPoints = request.NumberOfPoints)
 #     values = query_binary_values( 'OUTPDATA', datatype='d', header_fmt='hp', is_big_endian=True)
      
 #     print ("First data value : %d"%(dataSamp[0,0]))
      ##TODO - check this more 
-     # request.Sparam1 should be 2 
-     numSamps = len(dataSamp)//request.Sparam1 
-     sType = [guiRpc_pb2.SampleArray.S11]*numSamps+ [guiRpc_pb2.SampleArray.S21]*numSamps
+     # request.Sparam1 should be 2
+     sparamCount = 0
+     sType = []
+     if (guiRpc_pb2.SampleArray.S11 & request.Sparam1):
+       sType.append(guiRpc_pb2.SampleArray.S11)
+       sparamCount += 1
+     if (guiRpc_pb2.SampleArray.S21 & request.Sparam1):
+       sType.append(guiRpc_pb2.SampleArray.S21)
+       sparamCount += 1
+     if (guiRpc_pb2.SampleArray.S12 & request.Sparam1):
+       sType.append(guiRpc_pb2.SampleArray.S12)
+       sparamCount += 1
+     if (guiRpc_pb2.SampleArray.S22 & request.Sparam1):
+       sType.append(guiRpc_pb2.SampleArray.S22)
+       sparamCount += 1
+
+#       sType.append([guiRpc_pb2.SampleArray.S11])
+     print ("SparamCount: ",sparamCount)
+     print ("Num of Sample Vecs: {}".format(len(dataSamp)))
+     sparamCount = 2
+     numSamps = len(dataSamp)//sparamCount
+     sTypeAll = []
+     # TODO - Assuming that S21 measured first and then S11
+     for sp in sType[::-1]:
+         sTypeAll += [sp]*numSamps
      ####
-     print (numSamps)
      print (dataSamp[0].shape)
      print (dataSamp[0].dtype)
 
@@ -90,7 +128,7 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
 
         sampleArr = guiRpc_pb2.SampleArray(
          Meas_id = request.Meas_id,
-         Sparam = sType[i],
+         Sparam = sTypeAll[i],
          data = dataB,
          ff = ffB 
    #     data_bytes = np.ndarray.tobytes(values)
