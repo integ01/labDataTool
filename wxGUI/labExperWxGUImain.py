@@ -7,6 +7,7 @@ from wx import xrc
 import h5py
 import numpy as np
 import tables
+import time
 import os
 import sys
 
@@ -93,43 +94,58 @@ class MainApp(wx.App):
         self.m_gridDataTable.SetMargins( 0, 0 )
  
 	# Columns
-	self.m_gridDataTable.EnableDragColMove( False )
-	self.m_gridDataTable.EnableDragColSize( True )
-	self.m_gridDataTable.SetColLabelSize( 30 )
-	self.m_gridDataTable.SetColLabelValue( 0, u"Date" )
-	self.m_gridDataTable.SetColLabelValue( 1, u"Session" )
-	self.m_gridDataTable.SetColLabelValue( 2, u"Author" )
-	self.m_gridDataTable.SetColLabelValue( 3, u"Base" )
-	self.m_gridDataTable.SetColLabelValue( 4, u"Comp 1" )
-	self.m_gridDataTable.SetColLabelValue( 5, u"Comp 2" )
-	self.m_gridDataTable.SetColLabelValue( 6, u"Comp 3" )
-	self.m_gridDataTable.SetColLabelValue( 7, u"P1" )
-	self.m_gridDataTable.SetColLabelValue( 8, u"P2" )
-	self.m_gridDataTable.SetColLabelValue( 9, u"P3" )
-	self.m_gridDataTable.SetColLabelValue( 10, u"H5Path" )
-	self.m_gridDataTable.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+        self.m_gridDataTable.EnableDragColMove( False )
+        self.m_gridDataTable.EnableDragColSize( True )
+        self.m_gridDataTable.SetColLabelSize( 30 )
+        self.m_gridDataTable.SetColLabelValue( 0, u"Date" )
+        self.m_gridDataTable.SetColLabelValue( 1, u"Session" )
+        self.m_gridDataTable.SetColLabelValue( 2, u"Author" )
+        self.m_gridDataTable.SetColLabelValue( 3, u"Base" )
+        self.m_gridDataTable.SetColLabelValue( 4, u"Comp 1" )
+        self.m_gridDataTable.SetColLabelValue( 5, u"Comp 2" )
+        self.m_gridDataTable.SetColLabelValue( 6, u"Comp 3" )
+        self.m_gridDataTable.SetColLabelValue( 7, u"P1" )
+        self.m_gridDataTable.SetColLabelValue( 8, u"P2" )
+        self.m_gridDataTable.SetColLabelValue( 9, u"P3" )
+        self.m_gridDataTable.SetColLabelValue( 10, u"H5Path" )
+        self.m_gridDataTable.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
 
 	# Rows
-	self.m_gridDataTable.EnableDragRowSize( True )
-	self.m_gridDataTable.SetRowLabelSize( 80 )
-	self.m_gridDataTable.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+        self.m_gridDataTable.EnableDragRowSize( True )
+        self.m_gridDataTable.SetRowLabelSize( 80 )
+        self.m_gridDataTable.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
 
 
         self.m_textTester = xrc.XRCCTRL(self.panelMain, "m_textTester")
         self.m_textNotes = xrc.XRCCTRL(self.panelMain, "m_textNotes")
         self.m_textSession = xrc.XRCCTRL(self.panelMain, "m_textSession")
+        self.m_choiceProcedure = xrc.XRCCTRL(self.panelMain, "m_choiceProcedure")
         self.m_textInitialVol = xrc.XRCCTRL(self.panelMain, "m_textInitialVol")
         self.m_textNumMeasures =  xrc.XRCCTRL(self.panelMain, "m_textNumMeasures")
-        self.m_textInitialVol = xrc.XRCCTRL(self.panelMain, "m_textInitialVol")
         self.m_textConcenDelta = xrc.XRCCTRL(self.panelMain, "m_textCtrl7")
         self.m_textPepetoVolEx = xrc.XRCCTRL(self.panelMain, "m_textPepetoVolEx")
         self.m_choiceStep = xrc.XRCCTRL(self.panelMain, "m_choiceStep")
-        self.m_choiceTestType = xrc.XRCCTRL(self.panelMain, "m_choice1")
-        self.m_choiceProcedure = xrc.XRCCTRL(self.panelMain, "m_choiceProcedure")
+        
+        self.expr_testBase = xrc.XRCCTRL(self.panelMain, "m_choiceBase")
+        self.expr_BaseComment =  xrc.XRCCTRL(self.panelMain, "m_textBaseComment")
+        self.expr_volume = xrc.XRCCTRL(self.panelMain, "m_textVolume")
+        self.expr_comp1 = xrc.XRCCTRL(self.panelMain, "m_textComp1")
+        self.expr_comp2 = xrc.XRCCTRL(self.panelMain, "m_textComp2")
+        self.expr_comp3 = xrc.XRCCTRL(self.panelMain, "m_textComp3")
+        self.expr_comp4 = xrc.XRCCTRL(self.panelMain, "m_textComp4")
+        self.expr_P1 = xrc.XRCCTRL(self.panelMain, "m_textP1")
+        self.expr_P2 = xrc.XRCCTRL(self.panelMain, "m_textP2")
+        self.expr_P3 = xrc.XRCCTRL(self.panelMain, "m_textP3")
+        self.expr_P4 = xrc.XRCCTRL(self.panelMain, "m_textP4")
+
+
         self.m_gauge1 = xrc.XRCCTRL(self.panelMain, "m_gauge1")
         self.m_listBox1 = xrc.XRCCTRL(self.panelMain, "m_listBox1")
+        
+         
         self.dataBaseName = "dataFile0"
         self.dataBasePath = "../dataDir"
+        self.expr = {}
 
     def OnInit(self):
         self.frame_init_()
@@ -150,7 +166,6 @@ class MainApp(wx.App):
 
         self.frameMain.Show(True)
         self.state  = 0
-        self.expr = {}
         self.connectUrl = "127.0.0.1"
         self.connectState = 0
         #dateStr= datetime.datetime.now().strftime("%d/%m/%y")
@@ -247,6 +262,55 @@ class MainApp(wx.App):
         print ("GUI Error in VNA fields values")
 
 
+    def getExperFields(self):  
+      print ("DBG: start of get Fields") 
+      print ( int(time.time()))
+      self.expr['unix_timestamp'] = int(time.time())
+      self.expr['author'] = self.m_textTester.GetValue()
+      self.expr['misc'] = self.m_textNotes.GetValue()
+      self.session = self.m_textSession.GetValue()
+      self.expr['session'] = self.m_textSession.GetValue()
+
+      print ("Tester Name:"+self.expr['author'])
+      print ("Test Notes:"+ self.expr['misc'])
+      print ("Session:" + self.session)
+
+      self.expr['volume'] = self.expr_volume.GetValue()
+
+      self.expr['component0'] = self.expr_testBase.GetSelection()
+      self.expr['component1'] = self.expr_comp1.GetValue()
+      self.expr['component2'] = self.expr_comp2.GetValue()
+      self.expr['component3'] = self.expr_comp3.GetValue()
+      self.expr['component4'] = self.expr_comp4.GetValue()
+      self.expr['component5'] = "" #TODO update
+
+      print("Test Base:" + str(self.expr['component0']))
+      self.expr['title'] = str(self.expr['component0']) + self.expr['volume'] +self.expr['author'] 
+
+      self.expr['P0_volume'] = self.expr_BaseComment.GetValue()
+      self.expr['P1'] = self.expr_P1.GetValue()
+      self.expr['P2'] = self.expr_P2.GetValue()
+      self.expr['P3'] = self.expr_P3.GetValue()
+      self.expr['P4'] = self.expr_P4.GetValue()
+      self.expr['P5'] = "0"#TODO update
+
+      self.expr['numberOfComponents'] = 1 #TODO comp_sum(self.expr)
+
+      self.expr['stepUpDn'] = self.m_choiceStep.GetSelection()
+      print("step:" + str(self.expr['stepUpDn']))
+      self.expr['Procedure'] = self.m_choiceProcedure.GetSelection()
+      print("Test Procedure:" + str(self.expr['Procedure']))
+
+      self.expr['InitVolume'] =  self.m_textInitialVol.GetValue()
+      print ("initialVol:" + self.expr['InitVolume'])
+      self.expr['numMeasures'] = self.m_textNumMeasures.GetValue()
+      print (self.expr['numMeasures'])
+      self.expr['concenDelta'] = self.m_textConcenDelta.GetValue() 
+      print (self.expr['concenDelta'])
+      self.expr['initConcentrate'] = "0.1" # TODO -checkthis
+#      print (w.Text_InitConcen.get("1.0","end-1c"))
+      self.expr['volumeExchange'] = self.m_textPepetoVolEx.GetValue()
+      print (self.expr['volumeExchange'])
 
     def openFileClickCommon(self, filepath):
       filename = os.path.basename(filepath)
@@ -413,16 +477,10 @@ class MainApp(wx.App):
       ############################3
       #TODO - update setup fields
       #############################3
-      setUp = samplePlot.setUp
-      setUp['session'] =  self.maxsess +1 #rfSystem.maxsess
-      setUp['component0'] = self.expr['material1']
-      setUp['P1'] = self.expr['initConcentrate']
-      setUp['misc'] = self.expr['misc']
-      setUp['author'] = self.expr['author']
-#      rfSystem.startSample(setUp)
+      self.getExperFields()
     
       if self.rpcClient != None:
-         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp, hdStore=self.hdStore)
+         samplePlot.measureRemoteCall(self.rpcClient, gEna, self.expr, hdStore=self.hdStore)
  
       if self.state == 1:
         self.msgLabStep(0)
@@ -438,42 +496,17 @@ class MainApp(wx.App):
       if self.state != 0:
         print ("Wrong State Error")
         return
-      #expr = {}
-      #####################################
-      #TODO - fix fields names to new table
       print('LabExper0_support. Start the Experiment')
-      #sys.stdout.flush()
-      self.expr['author'] = self.m_textTester.GetValue()
-      print ("Tester Name:"+self.expr['author'])
-      self.expr['misc'] = self.m_textNotes.GetValue()
-      print ("Test Notes:"+ self.expr['misc'])
-      self.expr['stepUpDn'] = self.m_choiceStep.GetSelection()
-      print("step:" + str(self.expr['stepUpDn']))
-      self.expr['testType'] = self.m_choiceTestType.GetSelection()
-      print("Test Type:" + str(self.expr['testType']))
-      self.expr['Procedure'] = self.m_choiceProcedure.GetSelection()
-      print("Test Procedure:" + str(self.expr['Procedure']))
-      self.session = self.m_textSession.GetValue()
-      print ("Session:" + self.session)
-      self.expr['InitVolume'] =  self.m_textInitialVol.GetValue()
-      print ("initialVol:" + self.expr['InitVolume'])
-      self.expr['numMeasures'] = self.m_textNumMeasures.GetValue()
-      print (self.expr['numMeasures'])
-      self.expr['concenDelta'] = self.m_textConcenDelta.GetValue() 
-      print (self.expr['concenDelta'])
-      self.expr['initConcentrate'] = "0.1"
-#      print (w.Text_InitConcen.get("1.0","end-1c"))
-      self.expr['volumeExchange'] = self.m_textPepetoVolEx.GetValue()
-      print (self.expr['volumeExchange'])
-      self.expr['material1'] = "NaCl" #TODO update
-#      self.expr['material1'] = w.Text_Mat1.get("1.0","end-1c")
-#      print ("Material 1:"+expr['material1'])
-#      #expr['material2'] = w.Text_Mat2.get("1.0","end-1c")
-#      self.expr['mat1Concen'] = w.Text_Mat1Concen.get("1.0", "end-1c")
       try:
+        self.getExperFields()
+        #self.session = self.m_textSession.GetValue()
+        print(self.session)
         self.maxsess = int(self.session)
+        self.expr['numMeasures'] = self.m_textNumMeasures.GetValue()
+        print (self.expr['numMeasures'])
+         #TODO check this
         self.expr['testNumber'] = int(self.expr['numMeasures'])
-        self.numM = int(self.expr['numMeasures'])
+        self.numM = self.expr['testNumber']
         self.m_gauge1.SetRange(self.numM)
       except:
         print ("Exception in number parse")
@@ -494,7 +527,7 @@ class MainApp(wx.App):
       self.state = 1
 #      self.m_listBox1.Clear()
 #      self.m_listBox1.Append(messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
-      self.msgLabStep(0, msg= messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
+      self.msgLabStep(0, msg= messages.fixedVolMsgStart[0].format(self.session, self.expr['component1']) )
       #w.btnStart.configure(background="green")
  #    print (w.Checkbutton_DBOK.get("1.0","end-1c"))
 

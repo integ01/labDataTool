@@ -244,7 +244,8 @@ class hdf5DataTable:
       print(nData.dtype, nData.shape)
       enaAttr['ff'] = ndarry['ff']
       enaAttr['offset'] = ndarry['offset']
-      now = datetime.datetime.fromtimestamp(time.time())
+      #now = datetime.datetime.fromtimestamp(time.time())
+      now = datetime.datetime.fromtimestamp(setUp['unix_timestamp'])
       postfixDate = now.strftime("%Y%m%d")
       dataGrp = "data_" + postfixDate
       self.writeSamples('/lab0', setUp, dataGrp, nData, enaAttr)
@@ -273,8 +274,9 @@ class hdf5DataTable:
 
         #tbl.append(np.fromiter((setUp), dtype=tbl.dtype ))
         # now = int(time.time())
-        now = int(time.time())
-        
+        #now = int(time.time())
+        #now = datetime.datetime.fromtimestamp(time.time())
+        now = setUp['unix_timestamp']
         # 
         # Copy SetUp fields to table items
         # 

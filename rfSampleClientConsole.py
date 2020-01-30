@@ -169,7 +169,7 @@ def setEnaParams(paramItems):
 # query function
 # Input:
 #        hdStore - Hd5 storage class
-#        qstr - query string in pyTables format (sql like)
+#        cmd - query string in pyTables format (sql like)
 #        sp - Sparam to display
 def dbQuery(hdStore, cmd, parami, sp):
       if cmd[0]=='@':

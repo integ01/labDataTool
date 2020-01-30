@@ -451,7 +451,7 @@
 					</object>
 					<object class="notebookpage">
 						<label>Experiment Page</label>
-						<selected>0</selected>
+						<selected>1</selected>
 						<object class="wxPanel" name="m_panelExperiment">
 							<style>wxTAB_TRAVERSAL</style>
 							<object class="wxBoxSizer">
@@ -595,11 +595,54 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxChoice" name="m_choice1">
+															<object class="wxStaticText" name="m_staticText53">
+																<label>Solvant:</label>
+																<wrap>-1</wrap>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxChoice" name="m_choiceBase">
 																<selection>0</selection>
 																<content>
-																	<item>Water Solvent</item>
+																	<item>Water</item>
 																</content>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxStaticText" name="m_staticText55">
+																<label>Base Prop</label>
+																<wrap>-1</wrap>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxTextCtrl" name="m_textBaseComment">
+																<value></value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxStaticText" name="m_staticText54">
+																<label>Volume</label>
+																<wrap>-1</wrap>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxTextCtrl" name="m_textVolume">
+																<value></value>
 															</object>
 														</object>
 													</object>
@@ -675,7 +718,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl9">
+															<object class="wxTextCtrl" name="m_textComp1">
 																<value></value>
 															</object>
 														</object>
@@ -691,7 +734,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl11">
+															<object class="wxTextCtrl" name="m_textP1">
 																<value></value>
 															</object>
 														</object>
@@ -716,7 +759,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl91">
+															<object class="wxTextCtrl" name="m_textComp2">
 																<value></value>
 															</object>
 														</object>
@@ -732,7 +775,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl111">
+															<object class="wxTextCtrl" name="m_textP2">
 																<value></value>
 															</object>
 														</object>
@@ -757,7 +800,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl92">
+															<object class="wxTextCtrl" name="m_textComp3">
 																<value></value>
 															</object>
 														</object>
@@ -773,7 +816,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl112">
+															<object class="wxTextCtrl" name="m_textP3">
 																<value></value>
 															</object>
 														</object>
@@ -798,7 +841,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl93">
+															<object class="wxTextCtrl" name="m_textComp4">
 																<value></value>
 															</object>
 														</object>
@@ -814,7 +857,7 @@
 															<option>0</option>
 															<flag>wxALL</flag>
 															<border>5</border>
-															<object class="wxTextCtrl" name="m_textCtrl113">
+															<object class="wxTextCtrl" name="m_textP4">
 																<value></value>
 															</object>
 														</object>
@@ -1569,7 +1612,7 @@
 					</object>
 					<object class="notebookpage">
 						<label>Data Table</label>
-						<selected>1</selected>
+						<selected>0</selected>
 						<object class="wxPanel" name="m_panelDBTable">
 							<style>wxTAB_TRAVERSAL</style>
 							<object class="wxBoxSizer">
