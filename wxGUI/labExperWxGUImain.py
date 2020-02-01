@@ -1,4 +1,8 @@
-
+#############################################################
+# Useful links:
+# https://dzone.com/articles/wxpython-get-selected-cells-grid
+#
+#
 import wx
 import wx.grid
 from wx import xrc
@@ -8,6 +12,7 @@ import h5py
 import numpy as np
 import tables
 import time
+import datetime
 import os
 import sys
 
@@ -85,9 +90,13 @@ class MainApp(wx.App):
         self.db_buttonSearch= xrc.XRCCTRL(self.panelDB, 'm_buttonSearch')
 
         self.m_gridDataTable = xrc.XRCCTRL(self.panelDBTbl, "m_gridDataTable")
+        self.dbt_buttonPlot = xrc.XRCCTRL(self.panelDBTbl, "dbt_buttonPlot")
+        self.dbt_buttonExport = xrc.XRCCTRL(self.panelDBTbl, "dbt_buttonExport")
+
+        self.myGrid = self.m_gridDataTable
 	# Grid
         print (type(self.m_gridDataTable ))
-        self.m_gridDataTable.CreateGrid( 28, 11 )
+        self.m_gridDataTable.CreateGrid( 20, 9 )
         self.m_gridDataTable.EnableEditing( True )
         self.m_gridDataTable.EnableGridLines( True )
         self.m_gridDataTable.EnableDragGridSize( False )
@@ -101,19 +110,22 @@ class MainApp(wx.App):
         self.m_gridDataTable.SetColLabelValue( 1, u"Session" )
         self.m_gridDataTable.SetColLabelValue( 2, u"Author" )
         self.m_gridDataTable.SetColLabelValue( 3, u"Base" )
-        self.m_gridDataTable.SetColLabelValue( 4, u"Comp 1" )
-        self.m_gridDataTable.SetColLabelValue( 5, u"Comp 2" )
-        self.m_gridDataTable.SetColLabelValue( 6, u"Comp 3" )
-        self.m_gridDataTable.SetColLabelValue( 7, u"P1" )
-        self.m_gridDataTable.SetColLabelValue( 8, u"P2" )
-        self.m_gridDataTable.SetColLabelValue( 9, u"P3" )
-        self.m_gridDataTable.SetColLabelValue( 10, u"H5Path" )
+        self.m_gridDataTable.SetColLabelValue( 4, u"Comp 1/P1" )
+        self.m_gridDataTable.SetColLabelValue( 5, u"Comp 2/P2" )
+        self.m_gridDataTable.SetColLabelValue( 6, u"Comp 3/P3" )
+        self.m_gridDataTable.SetColLabelValue( 7, u"Comp 4/P4" )
+        self.m_gridDataTable.SetColLabelValue( 8, u"H5Path" )
         self.m_gridDataTable.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
 
 	# Rows
         self.m_gridDataTable.EnableDragRowSize( True )
         self.m_gridDataTable.SetRowLabelSize( 80 )
         self.m_gridDataTable.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+        self.gridDict = { u"Date": 'unix_timestamp' , u"Session": 'session' , 
+                u"Author": 'author' , u"Base": 'component0'
+                , u"Comp 1/P1":  'component1' , u"Comp 2/P2": 'component2'
+                , u"Comp 3/P3": 'component3' 
+                , u"Comp 4/P4": 'component4', u"H5Path":'dataArrRef' }
 
 
         self.m_textTester = xrc.XRCCTRL(self.panelMain, "m_textTester")
@@ -160,9 +172,11 @@ class MainApp(wx.App):
         self.vna_button6DBFileOpen.Bind(  wx.EVT_BUTTON, self.vna_buttonDBFileOpenClick )
         
         self.db_buttonSearch.Bind( wx.EVT_BUTTON, self.db_buttonSearchOnButtonClick )
+        self.dbt_buttonPlot.Bind( wx.EVT_BUTTON, self.dbt_buttonPlotClick )
+
         self.vna_buttonVNATest.Bind( wx.EVT_BUTTON, self.vna_buttonVNATestOnButtonClick)
-
-
+        self.m_gridDataTable.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.onSingleSelect)
+        self.m_gridDataTable.Bind(wx.grid.EVT_GRID_RANGE_SELECT, self.onDragSelection) 
 
         self.frameMain.Show(True)
         self.state  = 0
@@ -191,10 +205,81 @@ class MainApp(wx.App):
         self.expr_BaseComment.WriteText("Non Ionized")
         self.expr_volume.WriteText("70")
         #self.m_gridDataTable.AppendRows(1)
-      
+        self.rows = None      
         return True
+ #----------------------------------------------------------------------
+    def onSingleSelect(self, event):
+        """
+        Get the selection of a single cell by clicking or 
+        moving the selection with the arrow keys
+        """
+        print ("You selected Row %s, Col %s" % (event.GetRow(),
+                                               event.GetCol()))
+        self.currentlySelectedCell = (event.GetRow(),
+                                      event.GetCol())
+        event.Skip()
+    #------------------------------------------------------------
+    def onDragSelection(self, event):
+        """
+        Gets the cells that are selected by holding the left
+        mouse button down and dragging
+        """
+        if self.myGrid.GetSelectionBlockTopLeft():
+            top_left = self.myGrid.GetSelectionBlockTopLeft()[0]
+            bottom_right = self.myGrid.GetSelectionBlockBottomRight()[0]
+            self.printSelectedCells(top_left, bottom_right)
+ 
+    #----------------------------------------------------------------------
+    def dbt_buttonPlotClick(self, event):
+        """
+        Get whatever cells are currently selected
+        """
+        cells = self.myGrid.GetSelectedCells()
+        if not cells:
+            if self.myGrid.GetSelectionBlockTopLeft():
+                top_left = self.myGrid.GetSelectionBlockTopLeft()[0]
+                bottom_right = self.myGrid.GetSelectionBlockBottomRight()[0]
+                #self.printSelectedCells(top_left, bottom_right)
+                rows_start = top_left[0]
+                rows_end = bottom_right[0]
+                freqL, clist = samplePlot.getRowsFreqData(self.hdStore, self.rows, range(rows_start, rows_end+1), "S21") # TODO - fix offset
+                samplePlot.plotMeas(freqL, clist) 
+            else:
+                print (self.currentlySelectedCell)
+        else:
+            print (cells)
+     #----------------------------------------------------------------------
+        
 
 
+    def printSelectedCells(self, top_left, bottom_right):
+        """
+        Based on code from http://ginstrom.com/scribbles/2008/09/07/getting-the-selected-cells-from-a-wxpython-grid/
+        """
+        cells = []
+ 
+        rows_start = top_left[0]
+        rows_end = bottom_right[0]
+ 
+        cols_start = top_left[1]
+        cols_end = bottom_right[1]
+ 
+        rows = range(rows_start, rows_end+1)
+        cols = range(cols_start, cols_end+1)
+ 
+        cells.extend([(row, col)
+            for row in rows
+            for col in cols])
+ 
+        print ("You selected the following cells: ", cells)
+ 
+        for cell in cells:
+            row, col = cell
+            print (self.myGrid.GetCellValue(row, col))
+
+
+
+     #----------------------------------------------------------------------
     def msgLabStep(self, i, msg=''):
       if msg == '':
         if i==1:
@@ -211,6 +296,7 @@ class MainApp(wx.App):
 
 # Virtual event handlers, overide them in your derived class
 
+     #----------------------------------------------------------------------
     def db_buttonSearchOnButtonClick(self, event):
         # TODO - add table presentation option
         parami = 0
@@ -229,10 +315,38 @@ class MainApp(wx.App):
               parami = int(param)
             except ValueError:
               print ("Wrong value in Minuts text") 
-        freqL, clist = samplePlot.dbQuery(self.hdStore, cmd, parami, sp)
-        samplePlot.plotMeas(freqL, clist) 
+#        freqL, clist = samplePlot.dbQuery(self.hdStore, cmd, parami, sp)
+#        samplePlot.plotMeas(freqL, clist) 
+        self.rows = samplePlot.dbQueryExprList(self.hdStore, cmd, parami)
+        self.m_gridDataTable.EnableEditing(True)
+        for i in range(len(self.rows)):
+            dateStr = datetime.datetime.fromtimestamp(self.rows.loc[i]['unix_timestamp'])
+            dataStr = dateStr.strftime("%d/%m/%y")
+            self.m_gridDataTable.SetCellValue(i,0,str(dateStr))
+            cell=self.rows.loc[i]
+            print (cell.dtypes)
+            print ("----------")
+            for j in range(1,9):
+                label = self.gridDict[self.m_gridDataTable.GetColLabelValue( j)]
+                print (label, type(cell[label]))
+                if  isinstance(cell[label], type(bytes())):
+                  if "component" in label and label[-1] != '0':
+                    compStr = cell[label].decode('utf-8')
+                    idx = label[-1]
+                    if len(compStr)>0:
+                      field = compStr + '/' + str(cell['P'+idx])
+                    else: field = ""
+                  else:
+                    field = cell[label].decode('utf-8')
+                  print(field)
+                  self.m_gridDataTable.SetCellValue(i,j,field)
+                #if  cell[label].dtype in 'int' or  cell[label].dtype in 'float':
+                else:
+                  print(cell[label])
+                  self.m_gridDataTable.SetCellValue(i,j,str(cell[label]))
+        self.m_gridDataTable.EnableEditing(False)
 
-        
+     #----------------------------------------------------------------------
     def getVNAFields(self):    
       try:
 #        self.nPoints = int(self.vna_textNumSamplePoints.GetValue())
@@ -264,6 +378,7 @@ class MainApp(wx.App):
         print ("GUI Error in VNA fields values")
 
 
+     #----------------------------------------------------------------------
     def getExperFields(self):  
       print ("DBG: start of get Fields") 
       print ( int(time.time()))
@@ -325,6 +440,7 @@ class MainApp(wx.App):
       self.expr['_volumeExchange'] = self.m_textPepetoVolEx.GetValue()
       print (self.expr['_volumeExchange'])
 
+     #----------------------------------------------------------------------
     def openFileClickCommon(self, filepath):
       filename = os.path.basename(filepath)
       filepath = filepath[:-len(filename)-1]

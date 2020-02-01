@@ -451,7 +451,7 @@
 					</object>
 					<object class="notebookpage">
 						<label>Experiment Page</label>
-						<selected>1</selected>
+						<selected>0</selected>
 						<object class="wxPanel" name="m_panelExperiment">
 							<style>wxTAB_TRAVERSAL</style>
 							<object class="wxBoxSizer">
@@ -1612,7 +1612,7 @@
 					</object>
 					<object class="notebookpage">
 						<label>Data Table</label>
-						<selected>0</selected>
+						<selected>1</selected>
 						<object class="wxPanel" name="m_panelDBTable">
 							<style>wxTAB_TRAVERSAL</style>
 							<object class="wxBoxSizer">
@@ -1634,6 +1634,44 @@
 													<flag>wxALL|wxEXPAND</flag>
 													<border>5</border>
 													<object class="wxGrid" name="m_gridDataTable" />
+												</object>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALIGN_CENTER_HORIZONTAL</flag>
+											<border>5</border>
+											<object class="wxBoxSizer">
+												<orient>wxVERTICAL</orient>
+												<object class="sizeritem">
+													<option>1</option>
+													<flag>wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+															<border>5</border>
+															<object class="wxButton" name="dbt_buttonPlot">
+																<label>Plot Selection</label>
+																<default>0</default>
+																<markup>0</markup>
+																<bitmap />
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+															<border>5</border>
+															<object class="wxButton" name="dbt_buttonExport">
+																<label>Export Selection</label>
+																<default>0</default>
+																<markup>0</markup>
+																<bitmap />
+															</object>
+														</object>
+													</object>
 												</object>
 											</object>
 										</object>

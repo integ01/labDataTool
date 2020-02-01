@@ -165,6 +165,48 @@ def setEnaParams(paramItems):
        enaP[key] = item
   return enaP
 
+def getRowsFreqData(hdStore, rows, rangeList, sparam):
+      dL = []
+      clist = []
+      for i in rangeList:
+        datapath = rows.loc[i]['dataArrRef'].decode()
+        print (datapath)
+        darray = hdStore.getDataByRef(datapath)
+        print (darray.shape, darray.dtype)
+        print (darray.attrs.sparamOffset)
+        if sparam in  darray.attrs.sparamOffset.keys():
+          off = darray.attrs.sparamOffset[sparam]
+        else: off = 0
+        freqL = darray.attrs.ff
+        dL.append(darray)
+      for data in dL:
+         
+        complex_sample = np.squeeze(data[0, :, off]) #'sData'] #TODO fix offset
+        #print("Data type on query:", values.dtype) 
+        #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
+        print(complex_sample.shape) 
+        print(type(complex_sample[0]))
+        clist.append(complex_sample)
+      return ( freqL, clist)
+
+############################
+# query function
+# Input:
+#        hdStore - Hd5 storage class
+#        cmd - query string in pyTables format (sql like)
+#        parami - time index .
+def dbQueryExprList(hdStore, cmd, parami):
+      if cmd[0]=='@':
+          qstr = cmd[1:]
+      else:
+          ts=hdStore.getTimeStamp(cmd, parami)  
+          qstr = "unix_timestamp >= %d"%(ts)
+          print ("Debug: using query"+ qstr)
+      rows = hdStore.query('/lab0/exprTable',qstr)
+      print (rows[:])
+      print ("Found %d entries"%(len(rows)))
+      return rows
+
 ############################
 # query function
 # Input:
@@ -200,7 +242,7 @@ def dbQuery(hdStore, cmd, parami, sp):
         print(complex_sample.shape) 
         print(type(complex_sample[0]))
         clist.append(complex_sample)
-      return (freqL, clist)
+      return ( freqL, clist)
 
 def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None):
       # ['Meas_id', 'ENADataMode', 'NPoints', 'fSTAR', 'fSTOP', 'fCENT', 'fSPAN',
