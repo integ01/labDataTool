@@ -56,7 +56,7 @@ class ExperimentTable(tables.IsDescription):
     component3= tables.StringCol(20, pos=15)
     component4= tables.StringCol(20, pos=16)
     component5= tables.StringCol(20, pos=17)
-    P0_volume= tables.Float32Col(pos=18)
+    P0_volume= tables.StringCol(20, pos=18)
     P1= tables.Float32Col(pos=19)
     P2= tables.Float32Col(pos=20)
     P3= tables.Float32Col(pos=21)
@@ -281,7 +281,8 @@ class hdf5DataTable:
         # Copy SetUp fields to table items
         # 
         for k in setUp.keys():
-          item[k] = setUp[k]
+          if k[0] != '_':  # Filter out non setup fields TODO
+            item[k] = setUp[k]
 
         print(item)
         print(setUp)

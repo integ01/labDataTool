@@ -67,7 +67,7 @@ class instMock:
    def write(self, cmd):
      if 'FORM3' not in cmd:
        self.cmd = cmd
-       #print ('Debug: write :' + cmd)
+#       print ('Debug: write :' + cmd)
      return
  
    def read(self, d=''):
@@ -112,7 +112,8 @@ class vnaHP8753C_GpibMock:
   #TODO-set points to 128
        pointStr = self.inst.read()#"POIN {0};".format(numpoints)
        print ("Number of Point to Read Per Sample: ", pointStr)
- 
+       print( "POIN {0};".format(self.inst.nPoints))
+
        # Get Frequency list
        self.inst.write("OUTPLIML;")
        self.inst.write('FORM3')
@@ -129,7 +130,8 @@ class vnaHP8753C_GpibMock:
     global complex_sample_list
     self.inst.query('OPC?;SING;')
     self.inst.write('FORM3')
-    self.inst.nPoints = nPoints
+    if nPoints > 0: 
+      self.inst.nPoints = nPoints
     self.setFreqList(nPoints)
     values = self.inst.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)
     values2 = self.inst.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)

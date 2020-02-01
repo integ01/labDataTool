@@ -188,6 +188,8 @@ class MainApp(wx.App):
         self.vna_checkBoxS11.SetValue(True)
         self.vna_checkBoxS21.SetValue(True)
 
+        self.expr_BaseComment.WriteText("Non Ionized")
+        self.expr_volume.WriteText("70")
         #self.m_gridDataTable.AppendRows(1)
       
         return True
@@ -198,7 +200,7 @@ class MainApp(wx.App):
         if i==1:
           self.m_listBox1.Clear()
         #self.m_listBox1.Append(messages.fixedVolMsgStep[i].format(self.expr['material1'], self.expr['volumeExchange'] ))
-          msg = messages.fixedVolMsgStep[i].format(self.expr['material1'], self.expr['volumeExchange'] )
+          msg = messages.fixedVolMsgStep[i].format(self.expr['component1'], self.expr['_volumeExchange'] )
         else:
           self.m_listBox1.Clear()
           #self.m_listBox1.Append( messages.fixedVolMsgStep[i])
@@ -269,7 +271,7 @@ class MainApp(wx.App):
       self.expr['author'] = self.m_textTester.GetValue()
       self.expr['misc'] = self.m_textNotes.GetValue()
       self.session = self.m_textSession.GetValue()
-      self.expr['session'] = self.m_textSession.GetValue()
+      self.expr['session'] = int(self.m_textSession.GetValue())
 
       print ("Tester Name:"+self.expr['author'])
       print ("Test Notes:"+ self.expr['misc'])
@@ -277,6 +279,7 @@ class MainApp(wx.App):
 
       self.expr['volume'] = self.expr_volume.GetValue()
 
+      print ("volume:" + self.expr['volume'])
       self.expr['component0'] = self.expr_testBase.GetSelection()
       self.expr['component1'] = self.expr_comp1.GetValue()
       self.expr['component2'] = self.expr_comp2.GetValue()
@@ -284,33 +287,43 @@ class MainApp(wx.App):
       self.expr['component4'] = self.expr_comp4.GetValue()
       self.expr['component5'] = "" #TODO update
 
+      self.expr['component0'] = 'Water' #TODO
       print("Test Base:" + str(self.expr['component0']))
+      if len(self.expr['author']) == 0:
+         self.expr['author'] = 'NA'
+
       self.expr['title'] = str(self.expr['component0']) + self.expr['volume'] +self.expr['author'] 
 
+      print("Title:" + str(self.expr['title']))
+
       self.expr['P0_volume'] = self.expr_BaseComment.GetValue()
-      self.expr['P1'] = self.expr_P1.GetValue()
-      self.expr['P2'] = self.expr_P2.GetValue()
-      self.expr['P3'] = self.expr_P3.GetValue()
-      self.expr['P4'] = self.expr_P4.GetValue()
+      if len(self.expr_P1.GetValue()) >0:
+         self.expr['P1'] = int(self.expr_P1.GetValue())
+      if len(self.expr_P2.GetValue()) >0:
+         self.expr['P2'] = int(self.expr_P2.GetValue())
+      if len(self.expr_P3.GetValue()) >0:
+         self.expr['P3'] = int(self.expr_P3.GetValue())
+      if len(self.expr_P4.GetValue()) >0:
+         self.expr['P4'] = int(self.expr_P4.GetValue())
       self.expr['P5'] = "0"#TODO update
 
       self.expr['numberOfComponents'] = 1 #TODO comp_sum(self.expr)
 
-      self.expr['stepUpDn'] = self.m_choiceStep.GetSelection()
-      print("step:" + str(self.expr['stepUpDn']))
-      self.expr['Procedure'] = self.m_choiceProcedure.GetSelection()
-      print("Test Procedure:" + str(self.expr['Procedure']))
+      self.expr['_stepUpDn'] = self.m_choiceStep.GetSelection()
+      print("step:" + str(self.expr['_stepUpDn']))
+      self.expr['_Procedure'] = self.m_choiceProcedure.GetSelection()
+      print("Test Procedure:" + str(self.expr['_Procedure']))
 
-      self.expr['InitVolume'] =  self.m_textInitialVol.GetValue()
-      print ("initialVol:" + self.expr['InitVolume'])
-      self.expr['numMeasures'] = self.m_textNumMeasures.GetValue()
-      print (self.expr['numMeasures'])
-      self.expr['concenDelta'] = self.m_textConcenDelta.GetValue() 
-      print (self.expr['concenDelta'])
-      self.expr['initConcentrate'] = "0.1" # TODO -checkthis
+      self.expr['_InitVolume'] =  self.m_textInitialVol.GetValue()
+      print ("initialVol:" + self.expr['_InitVolume'])
+      self.expr['numberOfMeasurements'] = self.m_textNumMeasures.GetValue()
+      print (self.expr['numberOfMeasurements'])
+      self.expr['_concenDelta'] = self.m_textConcenDelta.GetValue() 
+      print (self.expr['_concenDelta'])
+      self.expr['_initConcentrate'] = "0.1" # TODO -checkthis
 #      print (w.Text_InitConcen.get("1.0","end-1c"))
-      self.expr['volumeExchange'] = self.m_textPepetoVolEx.GetValue()
-      print (self.expr['volumeExchange'])
+      self.expr['_volumeExchange'] = self.m_textPepetoVolEx.GetValue()
+      print (self.expr['_volumeExchange'])
 
     def openFileClickCommon(self, filepath):
       filename = os.path.basename(filepath)
@@ -410,8 +423,8 @@ class MainApp(wx.App):
       self.msgLabStep(1)
       self.state = 1
       sys.stdout.flush()
-      self.expr['testNumber'] -= 1
-      tidx = -self.expr['testNumber'] + self.numM + 1
+      self.expr['_testNumber'] -= 1
+      tidx = -self.expr['_testNumber'] + self.numM + 1
       if tidx > self.numM:
        #Done
         self.m_buttonStopOnButtonClick(event)
@@ -478,7 +491,18 @@ class MainApp(wx.App):
       #TODO - update setup fields
       #############################3
       self.getExperFields()
-    
+      self.getVNAFields()
+      gEna['NumOfPoints'] = self.nPoints
+      gEna['NumOfScans'] = self.nScans
+      gEna['freq_STAR'] = self.freqStart
+      gEna['freq_STOP'] = self.freqStop
+      gEna['freq_CENT'] = self.freqCent
+      gEna['freq_SPAN'] = self.freqSpan
+      gEna['S11'] = int(self.S11)
+      gEna['S21'] = int(self.S21)*2
+      gEna['S12'] = int(self.S12)*4
+      gEna['S22'] = int(self.S22)*8
+ 
       if self.rpcClient != None:
          samplePlot.measureRemoteCall(self.rpcClient, gEna, self.expr, hdStore=self.hdStore)
  
@@ -502,23 +526,23 @@ class MainApp(wx.App):
         #self.session = self.m_textSession.GetValue()
         print(self.session)
         self.maxsess = int(self.session)
-        self.expr['numMeasures'] = self.m_textNumMeasures.GetValue()
-        print (self.expr['numMeasures'])
+        self.expr['numberOfMeasurements'] = int(self.m_textNumMeasures.GetValue())
+        print (self.expr['numberOfMeasurements'])
          #TODO check this
-        self.expr['testNumber'] = int(self.expr['numMeasures'])
-        self.numM = self.expr['testNumber']
+        self.expr['_testNumber'] = int(self.expr['numberOfMeasurements'])
+        self.numM = self.expr['_testNumber']
         self.m_gauge1.SetRange(self.numM)
       except:
         print ("Exception in number parse")
         pass
-      tidx = - self.expr['testNumber'] + self.numM+1
+      tidx = - self.expr['_testNumber'] + self.numM+1
       self.m_gauge1.SetValue(tidx)
 #      w.TextTestNum.insert("1.0",str(tidx)+"/"+str(expr['numM']))
       for k, i in self.expr.items():
           if (type(i) == type(str)) and len(i) == 0:
               print ("Illegal parameter: " + k)
           else:
-            if k=='numMeasures' or k=='initialVol':
+            if k=='numberOfMeasurements' or k=='initialVol':
               try:
                 self.expr[k]= float(i)
               except ValueError:

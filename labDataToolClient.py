@@ -71,7 +71,8 @@ class clientRpcAPI():
         print ("Stub returned ff byte len:%d"%(len(sample.ff.data_bytes)) )
         print( "Meas_id:%d, Sample SParam Type:%s, "%( sample.Meas_id, sample.Sparam) )
         print( "Data Len:%d"%( sample.data.data_length) )
-        print( "Sample Data head:%f"%( struct.unpack('d', sample.data.data_bytes[:8]) ))
+        if sample.data.data_length >=8:
+          print( "Sample Data head:%f"%( struct.unpack('d', sample.data.data_bytes[:8]) ))
 #        sampleNp = np.empty((402),dtype=np.dtype('f8') )
 
         ffNp = np.frombuffer(sample.ff.data_bytes, dtype=np.float32)
