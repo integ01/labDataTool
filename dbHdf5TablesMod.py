@@ -299,8 +299,8 @@ class hdf5DataTable:
         else:
             fdata = f.get_node('/' + grpData)
         atom = tables.Atom.from_dtype(np.dtype(np.complex128))
+        # TODO add attributes for the S11/S21/ parameters
 
-        # Add attributes for the S11/S21/ parameters
         table_arr = f.create_earray(fdata, newArrName, atom, (0,) + nData.shape, "S1", self.Filters)
         print ("Create data earray at:" + str(item['dataArrRef']))
         nDataE = nData[None, :]
@@ -404,7 +404,7 @@ class hdf5DataTable:
 
     def getTimeStamp(self, cmd, param=1):
         if cmd == "All":
-            startoftime = datetime.date.today() - datetime.timedelta(days=1000)
+            startoftime = datetime.date.today() - datetime.timedelta(days=10000)
             t = datetime.time(hour=6, minute=00)
             res = datetime.datetime.combine(startoftime, t)
         if cmd == "Today":

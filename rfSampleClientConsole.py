@@ -176,11 +176,11 @@ def getRowsFreqData(hdStore, rows, rangeList, sparam):
         print (darray.attrs.sparamOffset)
         if sparam in  darray.attrs.sparamOffset.keys():
           off = darray.attrs.sparamOffset[sparam]
-        else: off = 0
+        else: 
+          off = 0
         freqL = darray.attrs.ff
         dL.append(darray)
       for data in dL:
-         
         complex_sample = np.squeeze(data[0, :, off]) #'sData'] #TODO fix offset
         #print("Data type on query:", values.dtype) 
         #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
@@ -195,7 +195,7 @@ def getRowsFreqData(hdStore, rows, rangeList, sparam):
 #        hdStore - Hd5 storage class
 #        cmd - query string in pyTables format (sql like)
 #        parami - time index .
-def dbQueryExprList(hdStore, cmd, parami):
+def dbQueryExprList(hdStore, cmd, parami, paramend=0):
       if cmd[0]=='@':
           qstr = cmd[1:]
       else:
