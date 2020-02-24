@@ -113,7 +113,31 @@ def loadScript(input_file_path):
     inData =list(f.readlines())
     f.close()
     return list(filter(lambda x: x[0] != '#' and x[0] != '!' and x[0] != '/' and x[0]!='\n', inData))
-    
+   
+def plotMeasLabels(w_,X_, labels):
+  w = np.array(w_)
+#  X = np.array(X_)
+  cpal = ['skyblue', 'green', 'red', 'yellow']
+  plt.subplot(2,1,1)
+  for i, X in enumerate(X_):
+    magX = np.abs(X);
+    #print (X)
+    plt.plot(w,magX, marker='', color=cpal[i], label = labels[i], linewidth=1)
+ #   plt.xlabel('frequency in GHZ units'); 
+    plt.ylabel('|H|');
+    plt.legend()
+  plt.subplot(2,1,2)
+  for i, X in enumerate(X_):
+    magX = np.abs(X);
+    angX = np.angle(X);
+    plt.plot(w,angX, marker='', color=cpal[i], linewidth=1)
+    plt.xlabel('frequency in GHZ units'); 
+    plt.ylabel('Phase response');
+    plt.legend()
+#    plt.title('Phase Response')
+  plt.show()
+  
+
 def plotMeas(w_,X_):
   w = np.array(w_)
 #  X = np.array(X_)
@@ -165,37 +189,70 @@ def setEnaParams(paramItems):
        enaP[key] = item
   return enaP
 
-def getRowsFreqData(hdStore, rows, rangeList, sparam):
-      dL = []
-      clist = []
-      for i in rangeList:
-        datapath = rows.loc[i]['dataArrRef'].decode()
-        print (datapath)
-        darray = hdStore.getDataByRef(datapath)
-        print (darray.shape, darray.dtype)
-        print (darray.attrs.sparamOffset)
-        if sparam in  darray.attrs.sparamOffset.keys():
-          off = darray.attrs.sparamOffset[sparam]
-        else: 
-          off = 0
-        freqL = darray.attrs.ff
-        dL.append(darray)
-      for data in dL:
-        complex_sample = np.squeeze(data[0, :, off]) #'sData'] #TODO fix offset
-        #print("Data type on query:", values.dtype) 
-        #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
-        print(complex_sample.shape) 
-        print(type(complex_sample[0]))
-        clist.append(complex_sample)
-      return ( freqL, clist)
 
+
+########################################################################
+# decodeQueryDictR:
+#   condDict - Dictionary of query conditions encoded.
+#
+# 
+def decodeQueryDictR( item, name, leading = '( '):
+    global hdStore
+    global attr
+    #print(leading + name + ":")
+    res = leading
+    for i, (key, valList) in enumerate(item.items()):
+        print(leading + key + ":" + str(valList))
+        #print(leading + "  {}: {}, {}".format(key, val, type(val)))
+        if key[0] == '@':
+          params = valList
+          tsl = hdStore.parseTimeStamp(key[1:], params)  
+          if len(tsl) > 1 :
+             res += decodeQueryDictR( {'&': tsl},"")
+          else:
+             res += " ( {} )".format(tsl[0])
+        else:
+          for i ,valitem in enumerate(valList):
+            if isinstance(valitem, dict):
+              tempres = decodeQueryDictR(valitem, key)
+            elif isinstance(valitem,str):
+                tempres = valitem
+            if i!= 0:
+              res += " {} ( {} )".format(key, tempres)
+            else:
+              res += " ( {} ) ".format(tempres)
+        #elif isinstance(val, str):
+        #    print(leading + "  {}: {}".format(key, val ))
+    return res + " )"
+
+
+############################
+# dbQueryExprTblByDict:  query function
+# Input:
+#        hdStore - Hd5 storage class
+#        condDict - query conditions encoded in a dictionary format. 
+def dbQueryExprTblByDict(hdStore_, condDict):
+      global hdStore
+      hdStore = hdStore_
+      qstr = decodeQueryDictR( condDict, "ben")
+      print (qstr)
+      #if cmd[0]=='@':
+      #    qstr = cmd[1:]
+      #else:
+      #    ts=hdStore.getTimeStamp(cmd, parami)  
+      #    qstr = "unix_timestamp >= %d"%(ts)
+      #    print ("Debug: using query"+ qstr)
+      rows = hdStore.query('/lab0/exprTable',qstr)
+      print (rows[:])
+      print ("Found %d entries"%(len(rows)))
+      return rows
 ############################
 # query function
 # Input:
 #        hdStore - Hd5 storage class
 #        cmd - query string in pyTables format (sql like)
 #        parami - time index .
-def dbQueryExprList(hdStore, cmd, parami, paramend=0):
+def dbQueryExprList(hdStore, cmd, parami ):
       if cmd[0]=='@':
           qstr = cmd[1:]
       else:
@@ -446,11 +503,15 @@ def main(rpcClient):
 
 
 if __name__ == '__main__':  # You should keep this line for our auto-grading code.
-
+  
+  
   if hasattr(__builtins__, 'raw_input'): 
    input = raw_input
   logging.basicConfig()
   gEna = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
   rpcClient = labDataToolClient.clientRpcAPI('192.168.1.102:50051')
   main(rpcClient)
+
+#  condD = { "&" : ["unix_timestamp >= 100000", "unix_timestamp < 200000"]}
+#  condD2 = { "|": ["P1 > 50", {"&" : ["unix_timestamp >= 100000", "unix_timestamp < 200000"]}, "component0='Nacl'"] }
 

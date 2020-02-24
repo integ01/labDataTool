@@ -21,7 +21,7 @@ import sys
 
 sys.path.append("../")
 import matplotlib.pyplot as plt
-from dbHdf5TablesMod import hdf5DataTable
+import dbHdf5TablesMod as hd5Mod
 import messages
 
 import logging
@@ -31,6 +31,158 @@ import rfSampleClientConsole as samplePlot
 
 from pathlib import Path
 import pdb
+
+MaxTblRows = 50
+gridFrame = None
+
+
+class Frame(wx.Frame):
+    def __init__(self, parent):
+        wx.Frame.__init__(self, parent, -1, "Grid", size=(950,1250))
+        self.grid = wx.grid.Grid(self)
+#        self.grid.CreateGrid(20, 20)
+ #       self.but = Button(None, self)
+        self.grid.CreateGrid( MaxTblRows, 10 )
+        self.grid.EnableEditing( True )
+        self.grid.EnableGridLines( True )
+        self.grid.EnableDragGridSize( False )
+        self.grid.SetMargins( 0, 10 )
+        self.grid.MakeCellVisible(20,10)
+  
+
+	# Columns
+        self.grid.EnableDragColMove( False )
+        self.grid.EnableDragColSize( True )
+        self.grid.SetColLabelSize( 30 )
+        self.grid.SetColLabelValue( 0, u"Sel" )
+        self.grid.SetColLabelValue( 1, u"Date" )
+        self.grid.SetColLabelValue( 2, u"Session" )
+        self.grid.SetColLabelValue( 3, u"Author" )
+        self.grid.SetColLabelValue( 4, u"Base" )
+        self.grid.SetColLabelValue( 5, u"Comp 1/P1" )
+        self.grid.SetColLabelValue( 6, u"Comp 2/P2" )
+        self.grid.SetColLabelValue( 7, u"Comp 3/P3" )
+        self.grid.SetColLabelValue( 8, u"Comp 4/P4" )
+        self.grid.SetColLabelValue( 9, u"H5Path" )
+        self.grid.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+
+
+    # Grid CheckBox        
+        self.gridattr = wx.grid.GridCellAttr()
+        self.gridattr.SetEditor(wx.grid.GridCellBoolEditor())
+        #self.gridattr = wx.grid.GridCellAttr()
+        #self.gridattr.SetEditor(wx.grid.GridCellBoolEditor())
+        self.gridattr.SetRenderer(wx.grid.GridCellBoolRenderer())
+        self.grid.SetColAttr(0,self.gridattr)
+        self.grid.SetColSize(0,40)
+
+	# Rows
+        self.grid.EnableDragRowSize( True )
+        self.grid.SetRowLabelSize( 80 )
+        self.grid.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+        self.gridDict = { u"Date": 'unix_timestamp' , u"Session": 'session' , 
+                u"Author": 'author' , u"Base": 'component0'
+                , u"Comp 1/P1":  'component1' , u"Comp 2/P2": 'component2'
+                , u"Comp 3/P3": 'component3' 
+                , u"Comp 4/P4": 'component4', u"H5Path":'dataArrRef' }
+   #def OnInit(self):
+        self.grid.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.onSingleSelect)
+        self.grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK,self.onMouse)
+        self.grid.Bind(wx.grid.EVT_GRID_EDITOR_CREATED, self.onEditorCreated)
+
+        self.rowChecked = set([])
+ #----------------------------------------------------------------------
+    def onSingleSelect(self, event):
+        """
+        Get the selection of a single cell by clicking or 
+        moving the selection with the arrow keys
+        """
+        print ("You selected Row %s, Col %s" % (event.GetRow(),
+                                               event.GetCol()))
+        self.currentlySelectedCell = (event.GetRow(),
+                                      event.GetCol())
+        if event.GetCol() == 0:
+        #if True:
+               wx.CallAfter(self.grid.EnableCellEditControl)
+               #wx.CallAfter(wx.grid.Grid.EnableCellEditControl)
+               #wx.CallLater(100,self.toggleCheckBox)
+        event.Skip()
+    #------------------------------------------------------------
+    #def onDragSelection(self, event):
+    #    """
+    #    Gets the cells that are selected by holding the left
+    #    mouse button down and dragging
+    #    """
+    #    if self.myGrid.GetSelectionBlockTopLeft():
+    #        top_left = self.myGrid.GetSelectionBlockTopLeft()[0]
+    #        bottom_right = self.myGrid.GetSelectionBlockBottomRight()[0]
+    #        self.printSelectedCells(top_left, bottom_right)
+    # 
+    #----------------------------------------------------------------------
+            # TODO - Get selection by checkbox on the grid rows
+
+    def onMouse(self,evt):
+           print ("Event : Mouse ")
+           if evt.Col == 0:
+               wx.CallLater(250,self.toggleCheckBox)
+           evt.Skip()
+   
+    def toggleCheckBox(self):
+        #   if self.cb != None:
+             self.cb.Value = not self.cb.Value
+             print ("Toggle check box")
+             self.afterCheckBox(self.cb.Value)
+   
+    #def onCellSelected(self,evt):
+    #       if evt.Col == 1:
+    #           wx.CallAfter(self.EnableCellEditControl)
+    #       evt.Skip()
+   
+    def onEditorCreated(self,evt):
+           print ("Event : onEditorCreated", evt.Col)
+           if evt.Col == 0:
+#               self.m_gridDataTable.EnableEditing(True)
+               self.cb = evt.Control
+               self.cb.WindowStyle |= wx.WANTS_CHARS
+               self.cb.Bind(wx.EVT_KEY_DOWN,self.onKeyDown)
+               self.cb.Bind(wx.EVT_CHECKBOX,self.onCheckBox)
+           evt.Skip()
+   
+    def onKeyDown(self,evt):
+           if evt.KeyCode == wx.WXK_UP:
+               if self.grid.GridCursorRow > 0:
+                   self.grid.DisableCellEditControl()
+                   self.grid.MoveCursorUp(False)
+           elif evt.KeyCode == wx.WXK_DOWN:
+               if self.grid.GridCursorRow < (self.NumberRows-1):
+                   self.grid.DisableCellEditControl()
+                   self.grid.MoveCursorDown(False)
+           elif evt.KeyCode == wx.WXK_LEFT:
+               if self.grid.GridCursorCol > 0:
+                   self.grid.DisableCellEditControl()
+                   self.grid.MoveCursorLeft(False)
+           elif evt.KeyCode == wx.WXK_RIGHT:
+               if self.grid.GridCursorCol < (self.NumberCols-1):
+                   self.grid.DisableCellEditControl()
+                   self.grid.MoveCursorRight(False)
+           else:
+               evt.Skip()
+   
+    def onCheckBox(self,evt):
+          self.afterCheckBox(evt.IsChecked())
+   
+    def afterCheckBox(self,isChecked):
+           print ('afterCheckBox',self.grid.GridCursorRow,isChecked)
+           key = self.grid.GridCursorRow
+
+           if isChecked and key not in self.rowChecked:
+              self.rowChecked.add(key) 
+           elif key in self.rowChecked:
+              self.rowChecked.remove(key) 
+
+#           self.grid.EnableEditing(False)
+
+    #-------------------------------------
 
 class MainApp(wx.App):
     def frame_init_(self):
@@ -47,6 +199,9 @@ class MainApp(wx.App):
         self.S21 = 0
         self.S12 = 0
         self.S22 = 0
+
+        self.sel_date = None
+        self.sel_date2 = None
 
         self.res = xrc.XmlResource("mna2.xrc")
         self.frameMain = self.res.LoadFrame(None, "FrameMain")
@@ -103,16 +258,20 @@ class MainApp(wx.App):
         self.dbt_buttonPlot = xrc.XRCCTRL(self.panelDBTbl, "dbt_buttonPlot")
         self.dbt_buttonExport = xrc.XRCCTRL(self.panelDBTbl, "dbt_buttonExport")
 
-        self.myGrid = self.m_gridDataTable
+        self.db_buttonPlot2 = xrc.XRCCTRL(self.panelDB, "m_buttonPlot2")
+        self.db_buttonExport2 = xrc.XRCCTRL(self.panelDB, "m_buttonExport2")
+
 	# Grid
+        self.myGrid = self.m_gridDataTable
         print (type(self.m_gridDataTable ))
         self.m_gridDataTable.CreateGrid( 20, 10 )
         self.m_gridDataTable.EnableEditing( True )
         self.m_gridDataTable.EnableGridLines( True )
         self.m_gridDataTable.EnableDragGridSize( False )
-        self.m_gridDataTable.SetMargins( 0, 0 )
-        
- 
+        self.m_gridDataTable.SetMargins( 0, 10 )
+        self.m_gridDataTable.MakeCellVisible(11,10)
+  
+
 	# Columns
         self.m_gridDataTable.EnableDragColMove( False )
         self.m_gridDataTable.EnableDragColSize( True )
@@ -149,7 +308,6 @@ class MainApp(wx.App):
                 , u"Comp 3/P3": 'component3' 
                 , u"Comp 4/P4": 'component4', u"H5Path":'dataArrRef' }
 
-
         self.m_textTester = xrc.XRCCTRL(self.panelMain, "m_textTester")
         self.m_textNotes = xrc.XRCCTRL(self.panelMain, "m_textNotes")
         self.m_textSession = xrc.XRCCTRL(self.panelMain, "m_textSession")
@@ -175,7 +333,6 @@ class MainApp(wx.App):
 
         self.m_gauge1 = xrc.XRCCTRL(self.panelMain, "m_gauge1")
         self.m_listBox1 = xrc.XRCCTRL(self.panelMain, "m_listBox1")
-        
          
         try:
           home = str(Path.home())
@@ -190,6 +347,7 @@ class MainApp(wx.App):
         self.frame_init_()
         #mainFrame = frameMain(self)
         #mainFrame.show(True)
+
         self.m_buttonStart.Bind( wx.EVT_BUTTON, self.m_buttonStartOnButtonClick )
         self.m_buttonMeasure.Bind( wx.EVT_BUTTON, self.m_buttonMeasureOnButtonClick )
         self.m_buttonStop.Bind( wx.EVT_BUTTON, self.m_buttonStopOnButtonClick )
@@ -199,9 +357,13 @@ class MainApp(wx.App):
         self.vna_button6DBFileOpen.Bind(  wx.EVT_BUTTON, self.vna_buttonDBFileOpenClick )
         
         self.db_buttonSearch.Bind( wx.EVT_BUTTON, self.db_buttonSearchOnButtonClick )
+
+        self.db_buttonPlot2.Bind( wx.EVT_BUTTON, self.dbt_buttonPlotClick )
         self.dbt_buttonPlot.Bind( wx.EVT_BUTTON, self.dbt_buttonPlotClick )
 
         self.vna_buttonVNATest.Bind( wx.EVT_BUTTON, self.vna_buttonVNATestOnButtonClick)
+
+        ###### Grid selection events
         self.m_gridDataTable.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.onSingleSelect)
 #        self.m_gridDataTable.Bind(wx.grid.EVT_GRID_SELECT_CELL,self.onCellSelected)
 #        self.m_gridDataTable.Bind(wx.grid.EVT_GRID_RANGE_SELECT, self.onDragSelection) 
@@ -245,9 +407,10 @@ class MainApp(wx.App):
         self.expr_BaseComment.WriteText("Non Ionized")
         self.expr_volume.WriteText("70")
         #self.m_gridDataTable.AppendRows(1)
-        self.rows = None      
+        rows = None      
         return True
  #----------------------------------------------------------------------
+    
     def onSingleSelect(self, event):
         """
         Get the selection of a single cell by clicking or 
@@ -337,14 +500,20 @@ class MainApp(wx.App):
               self.rowChecked.remove(key) 
 
 #           self.m_gridDataTable.EnableEditing(False)
-
+    
 
     #----------------------------------------------------------------------
     def dbt_buttonPlotClick(self, event):
         """
         Get whatever cells are currently selected
         """
-        print("Selected cells:{}".format(self.rowChecked))
+        global gridFrame
+        if gridFrame != None:
+           print("Selected cells:{}".format(gridFrame.rowChecked))
+           self.rowChecked = gridFrame.rowChecked
+        else:
+           print("Selected cells:{}".format(self.rowChecked))
+           
         rowCList = list(self.rowChecked)
         rowCList.sort()
         rowCList.append(-1)
@@ -353,6 +522,7 @@ class MainApp(wx.App):
         rows_end = -1
         freqL = []
         clist = []
+        labels = []
         for rowIdx in rowCList:
           print (rowIdx, rows_start, rows_end)
           if rows_start == -1:
@@ -361,7 +531,12 @@ class MainApp(wx.App):
           elif rows_end < rowIdx or rowIdx == -1: 
 #              if rowsIdx == -1: rows_end +=1
               print (rows_start, rows_end)
-              freqL, clist_ = samplePlot.getRowsFreqData(self.hdStore, self.rows, range(rows_start, rows_end), "S21Mean")
+              freqL, clist_ = self.hdStore.getRowsFreqData( self.rows, range(rows_start, rows_end), "S21Mean")
+              for rowidx in range(rows_start, rows_end):
+                st = self.rows.loc[rowidx]['misc'].decode('utf-8')
+                print (st, type(st))
+                labels.append(hd5Mod.extractLabelFromPath( st) )
+
               clist = clist_ + clist
               rows_start = rowIdx 
               rows_end = rowIdx + 1
@@ -369,8 +544,9 @@ class MainApp(wx.App):
               rows_end = rowIdx + 1
 
         print("number of pLots:{}".format(len(clist)))
+        print(labels) 
         if len(clist)>0:
-          samplePlot.plotMeas(freqL, clist) 
+          samplePlot.plotMeasLabels(freqL, clist, labels) 
 
         #cells = self.myGrid.GetSelectedCells()
 #        if not cells:
@@ -437,6 +613,7 @@ class MainApp(wx.App):
      #----------------------------------------------------------------------
     def OnDateChangedStart(self, evt):
         self.sel_date = evt.GetDate()
+        self.sel_date2 = evt.GetDate()
         self.db_dateEnd.SetValue(self.sel_date)
         print (self.sel_date.Format("%d-%m-%Y"))
 
@@ -448,44 +625,99 @@ class MainApp(wx.App):
      #----------------------------------------------------------------------
     def db_buttonSearchOnButtonClick(self, event):
         # TODO - add table presentation option
-        parami = 0
+        param = 0
+        param2 = 0
         sp = 0   # TODO Add sparam selection
-        cmd = 'All'
+        cmd = '@All'
         if (self.db_radioTime_Today.GetValue()):
-            cmd = 'Today'
+            cmd = '@Today'
         elif (self.db_radioBtnTimeLastHour.GetValue()):
-            cmd = 'LastHour'
+            cmd = '@LastHour'
+            param = 1
         elif (self.db_radioBtnTime_All.GetValue()):
-            cmd = 'All'
+            cmd = '@All'
         elif (self.db_radioBtnTime_Min.GetValue()):
-            cmd = 'LastMinutes'
+            cmd = '@LastMinutes'
             try:
-              param = self.db_textCtrlDBNumMinutes.GetValue()
-              parami = int(param)
+              paramS = self.db_textCtrlDBNumMinutes.GetValue()
+              param = int(paramS)
             except ValueError:
               print ("Wrong value in Minuts text")
         elif (self.db_radioBtnDate.GetValue()):
             print(self.db_dateStart.GetValue()) #Format("%d-%m-%Y"))
             dateStart = self.db_dateStart.GetValue()
-            cmd = 'LastHour'
-            parami = 1 #dateStart 
-
-
+            dateEnd = self.db_dateEnd.GetValue()
+            cmd = '@Range'
+            try:
+              print (self.sel_date.Format("%s"))
+              print (self.sel_date2.Format("%s"))
+              param = int(self.sel_date.Format("%s")) 
+              param2 = int(self.sel_date2.Format("%s")) 
+            except ValueError:
+              print ("Wrong value in Dates")
+        
+        
+        tDict = { cmd  : [param, param2]}
 #        freqL, clist = samplePlot.dbQuery(self.hdStore, cmd, parami, sp)
 #        samplePlot.plotMeas(freqL, clist) 
-        self.rows = samplePlot.dbQueryExprList(self.hdStore, cmd, parami)
-        self.m_gridDataTable.EnableEditing(True)
-        #nrows = min( self.m_gridDataTable.GetNumRows(), len(self.rows))
-        nrows = min(20, len(self.rows))
+        #self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, cmd, parami)
+        self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, tDict)
+        nrows = min(MaxTblRows, len(self.rows))
+        
+        self.dispOnGrid(self.rows, nrows)
+        
+        #self.dispOnFrameGrid(self.rows, nrows)
+
+    def dispOnFrameGrid(self, rows, nrows):
+        global gridFrame
+        gridFrame = Frame(None)
+
+        gridFrame.grid.EnableEditing(True)
+        #nrows = min( gridFrame.GetNumRows(), len(self.rows))
         print (nrows)
         for i in range(nrows):
-            dateStr = datetime.datetime.fromtimestamp(self.rows.loc[i]['unix_timestamp'])
+            dateStr = datetime.datetime.fromtimestamp(rows.loc[i]['unix_timestamp'])
             dataStr = dateStr.strftime("%d/%m/%y")
-            self.m_gridDataTable.SetCellValue(i,1,str(dateStr))
-            cell=self.rows.loc[i]
+            gridFrame.grid.SetCellValue(i,1,str(dateStr))
+            cell=rows.loc[i]
             print (cell.dtypes)
             print ("----------")
             for j in range(2,10):
+                print (gridFrame.grid.GetColLabelValue( j))
+                label = self.gridDict[gridFrame.grid.GetColLabelValue( j)]
+                print (label, type(cell[label]))
+                if  isinstance(cell[label], type(bytes())):
+                  if "component" in label and label[-1] != '0':
+                    compStr = cell[label].decode('utf-8')
+                    idx = label[-1]
+                    if len(compStr)>0:
+                      field = compStr + '/' + str(cell['P'+idx])
+                    else: field = ""
+                  else:
+                    field = cell[label].decode('utf-8')
+                  print(field)
+                  gridFrame.grid.SetCellValue(i,j,field)
+                #if  cell[label].dtype in 'int' or  cell[label].dtype in 'float':
+                else:
+                  print(cell[label])
+                  gridFrame.grid.SetCellValue(i,j,str(cell[label]))
+#        self.m_gridDataTable.EnableEditing(False)
+        gridFrame.Show()
+
+    def dispOnGrid(self, rows, nrows):
+        self.m_gridDataTable.EnableEditing(True)
+        #nrows = min( self.m_gridDataTable.GetNumRows(), len(self.rows))
+        print (nrows)
+        for i in range(nrows):
+            self.m_gridDataTable.MakeCellVisible(11,10)
+            dateStr = datetime.datetime.fromtimestamp(rows.loc[i]['unix_timestamp'])
+            dataStr = dateStr.strftime("%d/%m/%y")
+            self.m_gridDataTable.SetCellValue(i,1,str(dateStr))
+            cell=rows.loc[i]
+            print (cell.dtypes)
+            print ("----------")
+            for j in range(2,10):
+                print (self.m_gridDataTable.GetColLabelValue( j))
                 label = self.gridDict[self.m_gridDataTable.GetColLabelValue( j)]
                 print (label, type(cell[label]))
                 if  isinstance(cell[label], type(bytes())):
@@ -611,7 +843,7 @@ class MainApp(wx.App):
       restore = True
       try:
           dlg = wx.MessageDialog(None, "File already exists, do you want to overwrite it?",'Overwrite', wx.YES_NO | wx.NO_DEFAULT|wx.ICON_QUESTION)
-          self.hdStore = hdf5DataTable(filters=filters1, path=filepath, dataBase_=filename, restore=restore, console=False,guidlg=dlg)
+          self.hdStore = hd5Mod.hdf5DataTable(filters=filters1, path=filepath, dataBase_=filename, restore=restore, console=False,guidlg=dlg)
       except Exception as e:
           print(e, str(e))
           print("DB Exception" )
@@ -843,5 +1075,7 @@ if __name__ == '__main__':
 
     gEna = samplePlot.setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 1,0,0])
     appframe = MainApp(False)
+    #gridFrame = Frame(None)
+    #gridFrame.Show()
     appframe.MainLoop()
 

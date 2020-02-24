@@ -35,6 +35,17 @@ def unixTimePostfix(time):
     postfix = now.strftime("%Y/%m/%d_%H:%M:%S")
     return postfix
 
+def extractLabelFromPath ( path):
+       if path == None:
+         return "NA"
+       print ("path" + path)
+       if len(path)> 0 :
+         l = len(path)-1
+         print (l)
+        # ridx = path[-1:0:-1].find['\\']
+         while path[l] != '\\' and l>0: l -=1
+       return path[l:]
+
 
 class ExperimentTable(tables.IsDescription):
     #   unix_timestamp = tables.Time64Col(pos=0)
@@ -109,6 +120,7 @@ class hdf5DataTable:
     def __init__(self, path = defaultPath, dataBase_=dataBaseName, filters=tables.Filters(complevel=0), restore=False, console=True, guidlg = None ):
         self.data_dir = path
         self.Filters = filters
+        self.f = None
         if os.path.exists(self.data_dir):
             pass  # shutil.rmtree(data_dir)
         else:
@@ -363,6 +375,40 @@ class hdf5DataTable:
         tbl.flush()
         f.close()
         return
+  #---------------------------------------------------------
+  # queryDataTimeCond:
+  # Input:
+  #     qList - list of query strings
+  #     pStart, pEnd : datetime format
+  # Output:
+  #    rows in pandas dataframe format.
+    def queryDataTimeCond(self, qList, pStart = None, pEnd = None):
+
+     qFinal = ""
+     for i, qstr in enumerate(qList):
+        if qstr[0] =='@':
+          params = [0,0]
+          if pStart == None:
+            pStart = datetime.datetime.now()
+          params[0] =int(time.mktime(pStart.timetuple()))
+          if pEnd == None: 
+             pEnd = pStart  ##TODO - check that only day is used (not hours)
+          params[1] = int(time.mktime(pEnd.timetuple()))
+          print (params)
+          tsl = self.parseTimeStamp(qstr[1:], params)
+          if len(tsl) == 2:
+             qres = "( {} ) & ( {} ) ".format(tsl[0],tsl[1])
+          elif len(tsl) == 1:
+             qres = "( {} ) ".format(tsl[0])
+        else:
+          qres = qstr
+        if (i==0): 
+           qFinal = qres
+        else:
+           qFinal = "( {} ) & {} ".format(qFinal, qres)
+     print (qFinal)
+     rows = self.query('/lab0/exprTable',qFinal)
+     return rows
 
     def query(self, grp, qStr=''):
         f = tables.open_file(self.filename, "a", filters=self.Filters)
@@ -373,7 +419,7 @@ class hdf5DataTable:
         rows = tbl.where(qStr)
         #self.printDat_It(iter(rows))
 #        x =  next(iter(rows))
-        print (tables.description.dtype_from_descr(ExperimentTable))
+        #print (tables.description.dtype_from_descr(ExperimentTable))
         t = tables.description.dtype_from_descr(ExperimentTable)
         npt =  np.empty((0,24), t )
         res = pd.DataFrame.from_records(npt[:])
@@ -385,8 +431,8 @@ class hdf5DataTable:
         for i,x in enumerate(iter(rows)): #it:  # tbl.iterrows():
                 #      print(x[tbl[:])
           res.loc[i] = list(x[:])
-        print (res)
-        print (len(res))
+        #print (res)
+        print ("Number of results: {}".format( len(res)))
        #res.append(x['session'], x['material'], x['rho'], x['sData']))
        #res.append( {'session': x['session'], 'material':x['material1'], 'concentrate':x['rho'], 'sData':x['sData']})
         
@@ -394,11 +440,125 @@ class hdf5DataTable:
          
         return res
 
+#####################################################
+# getRowsFreqData : Get Data referenced by the table entries  
+# Input : 
+#     hdStore - h5 database instance
+#     rows - pd data frame with experiment table entries (as rows)
+#     rangeList - index of entries to retreive data from.
+#     sparam - Type of data to retrieve (e.g "S11" or "S21" or "S21Mean"
+#
+# Output: (freqL, clist)
+#     freqL - list of the ENA sample frequencies. (only last data array used)
+#     clist - list of numpy array's with data. 
+#
+#####################################################
+
+    def getRowsFreqData( self, rows, rangeList, sparam):
+      dL = []
+      clist = []
+      for i in rangeList:
+        datapath = rows.loc[i]['dataArrRef'].decode()
+        print (datapath)
+        darray = self.getDataByRef(datapath)
+        print (darray.shape, darray.dtype)
+        print (darray.attrs.sparamOffset)
+        if sparam in  darray.attrs.sparamOffset.keys():
+          off = darray.attrs.sparamOffset[sparam]
+        else: 
+          off = 0
+        freqL = darray.attrs.ff
+        dL.append(darray)
+      for data in dL:
+        complex_sample = np.squeeze(data[0, :, off]) #'sData'] #TODO fix offset
+        #print("Data type on query:", values.dtype) 
+        #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
+        print(complex_sample.shape) 
+        print(type(complex_sample[0]))
+        clist.append(complex_sample)
+      if self.f != None:
+            self.f.close()
+      return ( freqL, clist)
+
+
     def getDataByRef(self, datapath):
-        f = tables.open_file(self.filename, "a", filters=self.Filters)
-        darray = f.get_node('/' + datapath)
+        self.f = tables.open_file(self.filename, "a", filters=self.Filters)
+        darray = self.f.get_node('/' + datapath)
 #        dataRes.append(darray)
+#        f.close()
         return darray
+
+
+    def parseTimeStamp0(self, cmd):
+
+#        prefix = "unix_timestamp >= "
+#        if cmd in "Before":
+#          prefix = "unix_timestamp < "
+        
+
+        if cmd in "All":
+            startoftime = datetime.date.today() - datetime.timedelta(days=10000)
+            t = datetime.time(hour=6, minute=00)
+            res = datetime.datetime.combine(startoftime, t)
+        elif cmd in "Today":
+            today = datetime.date.today()
+            t = datetime.time(hour=6, minute=00)
+            res = datetime.datetime.combine(today, t)
+        elif cmd in "LastHour" or cmd in "LastMinutes" or cmd in "Before":
+            try:
+              param = int(str.split(cmd)[1])
+            except:
+              print ("Error parse time stamp")
+            finally:
+              if cmd in "LastHour":
+                 res = datetime.datetime.now() - datetime.timedelta(hours=param)
+              elif cmd in "LastMinutes":
+                 res = datetime.datetime.now() - datetime.timedelta(minutes=param)
+        elif cmd == "Yesterday":
+            yesterday = datetime.date.today() - datetime.timedelta(days=1)
+            t = datetime.time(hour=6, minute=00)
+            res = datetime.datetime.combine(yesterday, t)
+        return int(res.strftime("%s"))
+
+ 
+    #def getTimeStamp2(self, cmd, params=[1,0]):
+###########################################################
+# parseTimeStamp
+# Input:
+#      cmd : Time command one of All, Today, LastHour, 
+#            LastMinutes, Yesterday, Range
+#      params: In case of :
+#           LastHour, LastMinutes - params[0] is used for number
+#           Range: params[0], params[1] - unix timestamp for start and end times
+#
+# Ouput: Array of query strings for time 
+#
+    def parseTimeStamp(self, cmd,params=[1,0]):
+
+        if cmd == "Range":
+             qstr1 = "unix_timestamp >= {}".format(params[0])
+             qstr2 = "unix_timestamp <= {}".format(params[1])
+             return [qstr1, qstr2] 
+        if cmd == "All":
+            startoftime = datetime.date.today() - datetime.timedelta(days=10000)
+            t = datetime.time(hour=6, minute=00)
+            res = datetime.datetime.combine(startoftime, t)
+        if cmd == "Today":
+            today = datetime.date.today()
+            t = datetime.time(hour=6, minute=00)
+            res = datetime.datetime.combine(today, t)
+        elif cmd == "LastHour":
+            res = datetime.datetime.now() - datetime.timedelta(hours=param[0])
+        elif cmd == "LastMinutes":
+            res = datetime.datetime.now() - datetime.timedelta(minutes=param[0])
+        elif cmd == "Yesterday":
+            yesterday = datetime.date.today() - datetime.timedelta(days=1)
+            t = datetime.time(hour=6, minute=00)
+            res = datetime.datetime.combine(yesterday, t)
+            
+#        return int(res.strftime("%s"))
+        return ["unix_timestamp >= {}".format(int(res.strftime("%s")))]
+
 
 
 
