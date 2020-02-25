@@ -62,6 +62,10 @@ def timeLogPostfix():
   now = datetime.datetime.now()
   postfix = now.strftime("%d_%H%M%S")
   return postfix
+def fullTimeLogPostfix():
+  now = datetime.datetime.now()
+  postfix = now.strftime("%y%m%d_%H%M%S")
+  return postfix
 
 
 def test_db(hdStore, numOper):

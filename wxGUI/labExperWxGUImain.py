@@ -32,6 +32,8 @@ import rfSampleClientConsole as samplePlot
 from pathlib import Path
 import pdb
 
+import scipy.io as sio
+
 MaxTblRows = 50
 gridFrame = None
 
@@ -360,6 +362,7 @@ class MainApp(wx.App):
 
         self.db_buttonPlot2.Bind( wx.EVT_BUTTON, self.dbt_buttonPlotClick )
         self.dbt_buttonPlot.Bind( wx.EVT_BUTTON, self.dbt_buttonPlotClick )
+        self.dbt_buttonExport.Bind( wx.EVT_BUTTON, self.dbt_buttonExportClick)
 
         self.vna_buttonVNATest.Bind( wx.EVT_BUTTON, self.vna_buttonVNATestOnButtonClick)
 
@@ -503,7 +506,7 @@ class MainApp(wx.App):
     
 
     #----------------------------------------------------------------------
-    def dbt_buttonPlotClick(self, event):
+    def getGridSelectedRows(self):
         """
         Get whatever cells are currently selected
         """
@@ -542,7 +545,24 @@ class MainApp(wx.App):
               rows_end = rowIdx + 1
           else:
               rows_end = rowIdx + 1
+        return freqL, clist, labels
 
+    def dbt_buttonExportClick(self, event):
+
+        freqL, clist, labels = self.getGridSelectedRows()
+        print("number of pLots:{}".format(len(clist)))
+        print(labels) 
+        dictSave = {}
+        for data, label in zip (clist, labels): 
+           dictSave[label] = data
+        dictSave['freq'] = freqL
+        fileName = "experData_" + samplePlot.fullTimeLogPostfix() + ".mat"
+        sio.savemat(fileName, dictSave)
+
+
+    def dbt_buttonPlotClick(self, event):
+
+        freqL, clist, labels = self.getGridSelectedRows()
         print("number of pLots:{}".format(len(clist)))
         print(labels) 
         if len(clist)>0:
