@@ -38,6 +38,22 @@ MaxTblRows = 50
 gridFrame = None
 
 
+def _pydate2wxdate(date):
+     import datetime
+     assert isinstance(date, (datetime.datetime, datetime.date))
+     tt = date.timetuple()
+     dmy = (tt[2], tt[1]-1, tt[0])
+     return wx.DateTimeFromDMY(*dmy)
+
+def _wxdate2pydate(date):
+     import datetime
+     assert isinstance(date, wx.DateTime)
+     if date.IsValid():
+          ymd = map(int, date.FormatISODate().split('-'))
+          return datetime.date(*ymd)
+     else:
+          return None
+
 class Frame(wx.Frame):
     def __init__(self, parent):
         wx.Frame.__init__(self, parent, -1, "Grid", size=(950,1250))
@@ -259,7 +275,8 @@ class MainApp(wx.App):
         self.m_gridDataTable = xrc.XRCCTRL(self.panelDBTbl, "m_gridDataTable")
         self.dbt_buttonPlot = xrc.XRCCTRL(self.panelDBTbl, "dbt_buttonPlot")
         self.dbt_buttonExport = xrc.XRCCTRL(self.panelDBTbl, "dbt_buttonExport")
-
+        self.dbt_buttonPrev = xrc.XRCCTRL(self.panelDBTbl, "m_buttonPrev")
+        self.dbt_buttonNext = xrc.XRCCTRL(self.panelDBTbl, "m_buttonNext")
         self.db_buttonPlot2 = xrc.XRCCTRL(self.panelDB, "m_buttonPlot2")
         self.db_buttonExport2 = xrc.XRCCTRL(self.panelDB, "m_buttonExport2")
 
@@ -363,6 +380,9 @@ class MainApp(wx.App):
         self.db_buttonPlot2.Bind( wx.EVT_BUTTON, self.dbt_buttonPlotClick )
         self.dbt_buttonPlot.Bind( wx.EVT_BUTTON, self.dbt_buttonPlotClick )
         self.dbt_buttonExport.Bind( wx.EVT_BUTTON, self.dbt_buttonExportClick)
+
+        self.dbt_buttonNext.Bind( wx.EVT_BUTTON, self.dbt_buttonNextClick )
+        self.dbt_buttonPrev.Bind( wx.EVT_BUTTON, self.dbt_buttonPrevClick )
 
         self.vna_buttonVNATest.Bind( wx.EVT_BUTTON, self.vna_buttonVNATestOnButtonClick)
 
@@ -547,8 +567,19 @@ class MainApp(wx.App):
               rows_end = rowIdx + 1
         return freqL, clist, labels
 
-    def dbt_buttonExportClick(self, event):
+    def dbt_buttonNextClick(self, event):
+       #TODO
+       pass 
 
+    def dbt_buttonPrevClick(self, event):
+       #TODO
+       pass
+
+    def dbt_buttonExportClick(self, event):
+        print("Press Export")
+        print ("Doing import test")
+        self.hdStore.importMergeHdf5("/home/samplab/Desktop/Data/Materials/test1.h5", "/lab0","")
+        '''
         freqL, clist, labels = self.getGridSelectedRows()
         print("number of pLots:{}".format(len(clist)))
         print(labels) 
@@ -558,7 +589,7 @@ class MainApp(wx.App):
         dictSave['freq'] = freqL
         fileName = "experData_" + samplePlot.fullTimeLogPostfix() + ".mat"
         sio.savemat(fileName, dictSave)
-
+        '''
 
     def dbt_buttonPlotClick(self, event):
 
@@ -641,7 +672,6 @@ class MainApp(wx.App):
         self.sel_date2 = evt.GetDate()
         print (self.sel_date2.Format("%d-%m-%Y"))
 
-
      #----------------------------------------------------------------------
     def db_buttonSearchOnButtonClick(self, event):
         # TODO - add table presentation option
@@ -667,21 +697,33 @@ class MainApp(wx.App):
             print(self.db_dateStart.GetValue()) #Format("%d-%m-%Y"))
             dateStart = self.db_dateStart.GetValue()
             dateEnd = self.db_dateEnd.GetValue()
+            print(type(dateStart))
+            if dateStart == dateEnd:
+               date_object = _wxdate2pydate(dateStart)
+               print(date_object)
+               t = datetime.time(hour=0, minute=00)
+               dateStart = datetime.datetime.combine(date_object, t)
+#               t2 = datetime.time(hour=23, minute=59)
+#               dateEnd = datetime.datetime.combine(date_object, t2)
+               dateDelta = datetime.timedelta(days=1)
+               dateEnd = dateStart + dateDelta
+               self.sel_date = _pydate2wxdate(dateStart)
+               self.sel_date2 = _pydate2wxdate(dateEnd)
             cmd = '@Range'
             try:
               print (self.sel_date.Format("%s"))
               print (self.sel_date2.Format("%s"))
               param = int(self.sel_date.Format("%s")) 
               param2 = int(self.sel_date2.Format("%s")) 
+              tDict = { cmd  : [param, param2]}
+              self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, tDict)
+              #self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, cmd, parami)
             except ValueError:
               print ("Wrong value in Dates")
         
         
-        tDict = { cmd  : [param, param2]}
-#        freqL, clist = samplePlot.dbQuery(self.hdStore, cmd, parami, sp)
-#        samplePlot.plotMeas(freqL, clist) 
-        #self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, cmd, parami)
-        self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, tDict)
+
+        
         nrows = min(MaxTblRows, len(self.rows))
         
         self.dispOnGrid(self.rows, nrows)

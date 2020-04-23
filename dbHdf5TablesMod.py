@@ -15,6 +15,8 @@ import shutil
 from tables.group import RootGroup
 #from typing import Any, Union
 import pandas as pd
+from pathlib import Path
+
 #SAMPLE_SHAPE = (2, 402)
 MAX_SESS_SAMPLES = 100
 defaultPath = "dataDir"
@@ -264,20 +266,81 @@ class hdf5DataTable:
       delta = 1
 
 
+  #############################################################
+  #
+  # func importMergeHdf5
+  # In:
+  #   filenameNew - name of hdf5 file to merge with
+  #   grp - hdf5 directory path base
+  #   subgrp - (Not used) option for sub groups to merge with.
+  # global session
+  #
+  # Merge to all HDF5 data into tables of the experiment fields 
+  #  and reference data arrays
+  #############################################################
+    def importMergeHdf5(self, filenameNew, grp, subgrp):
+        f = tables.open_file(self.filename, "a", filters=self.Filters)
+        tbl = f.get_node(grp + "/exprTable")  # '/lab0')
 
-#############################################################
-#
-# func writeSamples
-# In:
-#   grp - hdf5 directory path base
-#   grpData - Data Table group name
-#   setUp - Dict with class 'ExperimentTable' fields and their values
-#   nData - numpy arrays of sampled data - 'Mean' 1 (col), 'Std' 1 (col), 'raw'
-#   enaAttr - Dict vna machine setup attribures, 'ff'
-# global session
-#
-# Writes to HDF5 Tables all of the experiment fields
-#############################################################
+        f2 = tables.open_file(filenameNew, "r", filters=self.Filters)
+        tbl2 = f2.get_node(grp + "/exprTable")  # '/lab0')
+
+        for row2 in tbl2.iterrows():
+          #grpDataRaw =  row2['dataArrRef']
+          rec = row2.fetch_all_fields()
+          #print (rec)
+          #print (rec.dtype) 
+          newitem = tbl.row
+           
+          for k in rec.dtype.names:
+            #print(rec[k])
+            newitem[k] = rec[k]
+          newitem.append()
+
+          grpDataRaw =  row2['dataArrRef'].decode()
+          grpData2 = Path(grpDataRaw)
+          print ("H5PAth Link:" + grpDataRaw)
+          if '/'+ grpDataRaw in f2:
+            fdata2 = f2.get_node('/' + grpDataRaw)
+            tblData2 = fdata2.read()
+            #darray = f2.get_node('/' + datapath)
+          
+          print (grpData2.name)
+          print (grpData2.parts)
+          if "/" + grpData2.parts[0] not in f:
+            print ("Create Data Group:" + grpData2.parts[0])
+            fdataNew = f.create_group(f.root, grpData2.parts[0])
+          else:
+            fdataNew = f.get_node(f.root, grpData2.parts[0])
+  
+          newArrName = grpData2.name #TODO - should be the postfix of grpData withoht /datexxxx/
+          print ("Create earray:" + newArrName)
+          if "/" + grpDataRaw not in f:
+            table_arr = f.create_earray(fdataNew, newArrName, obj=tblData2, filters=self.Filters)
+            #newitem
+            #newitem.append()
+            print ("Copy data earray at:" + grpDataRaw)
+
+            tbl.flush()
+            table_arr.flush()
+        f.close()
+        f2.close()
+        return
+
+
+  #############################################################
+  #
+  # func writeSamples
+  # In:
+  #   grp - hdf5 directory path base
+  #   grpData - Data Table group name
+  #   setUp - Dict with class 'ExperimentTable' fields and their values
+  #   nData - numpy arrays of sampled data - 'Mean' 1 (col), 'Std' 1 (col), 'raw'
+  #   enaAttr - Dict vna machine setup attribures, 'ff'
+  # global session
+  #
+  # Writes to HDF5 Tables all of the experiment fields
+  #############################################################
     def writeSamples(self, grp, setUp, grpData, nData, enaAttr):
 
         f = tables.open_file(self.filename, "a", filters=self.Filters)
@@ -461,8 +524,9 @@ class hdf5DataTable:
         datapath = rows.loc[i]['dataArrRef'].decode()
         print (datapath)
         darray = self.getDataByRef(datapath)
-        print (darray.shape, darray.dtype)
-        print (darray.attrs.sparamOffset)
+        #print (darray.shape, darray.dtype)
+        #print (darray.dtype)
+        #print (darray.attrs.sparamOffset)
         if sparam in  darray.attrs.sparamOffset.keys():
           off = darray.attrs.sparamOffset[sparam]
         else: 
@@ -473,8 +537,8 @@ class hdf5DataTable:
         complex_sample = np.squeeze(data[0, :, off]) #'sData'] #TODO fix offset
         #print("Data type on query:", values.dtype) 
         #complex_sample[:] = values[sp,:] + 1j*values[sp+1,:]
-        print(complex_sample.shape) 
-        print(type(complex_sample[0]))
+        #print(complex_sample.shape) 
+        #print(type(complex_sample[0]))
         clist.append(complex_sample)
       if self.f != None:
             self.f.close()
