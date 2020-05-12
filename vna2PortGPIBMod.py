@@ -131,6 +131,7 @@ class vnaHP8753C_Gpib:
   # Get Frequency list
     self.inst.write("OUTPLIML;")
     self.inst.write('FORM3')
+    time.sleep(1)
     freqStr = self.inst.read_raw()
     freqStr = freqStr.replace('\n', ', ')
     freqLst = freqStr.split(",")

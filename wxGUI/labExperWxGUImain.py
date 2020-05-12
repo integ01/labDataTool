@@ -802,8 +802,8 @@ class MainApp(wx.App):
      #----------------------------------------------------------------------
     def getVNAFields(self):    
       try:
-#        self.nPoints = int(self.vna_textNumSamplePoints.GetValue())
-#        self.nScans = int(self.vna_textCtrlNumScans.GetValue())
+        self.nPoints = int(self.vna_textNumSamplePoints.GetValue())
+        self.nScans = int(self.vna_textCtrlNumScans.GetValue())
 #        print(str(self.vna_radioBtnSelStartEnd.GetSelection()))
         print ("Start getVNAFields")
         print(self.vna_radioBtnSelStartEnd.GetValue())
@@ -946,6 +946,7 @@ class MainApp(wx.App):
           self.connectState = 1
           # Test connection
           res = self.rpcClient.lab_send_cmd("POIN?")
+          print ("Raw:", res)
           try:
             self.nPoints = int(float(res))
           except:
