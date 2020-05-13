@@ -61,10 +61,26 @@ class instMock:
    def __init__(self):
      self.cmd = ''
      self.nPoints = 201
-
+     self.freqStart =  2000*1e+6
+     self.freqStop =  3000*1e+6
    def query(self, cmd):
      return '' 
    def write(self, cmd):
+     if 'STAR' in cmd:
+       sublist = cmd[5:].split(".") 
+       try:
+          self.freqStart = int(sublist[0])*1e+6
+          self.cmd = cmd
+       except:
+          print ("Couldn't Parse STAR command")
+     if 'STOP' in cmd:
+       sublist = cmd[5:].split(".") 
+       try:
+          self.freqStop = int(sublist[0])*1e+6
+          self.cmd = cmd
+       except:
+          print ("Couldn't Parse STAR command")
+
      if 'FORM3' not in cmd:
        self.cmd = cmd
 #       print ('Debug: write :' + cmd)
@@ -80,7 +96,7 @@ class instMock:
  
    def read_raw(self, cmd=''):
      if 'OUTPLIML' in self.cmd:
-        freqList = [ 2e+9+i*1e+9/(self.nPoints-1) for i in range(self.nPoints)]
+        freqList = [ self.freqStart+k*(self.freqStop-self.freqStart)/(self.nPoints-1) for k in range(self.nPoints)]
         fstr = ''
         for it in freqList:
           fstr += str(it) +', 0, 0, 0 \n'
@@ -118,13 +134,14 @@ class vnaHP8753C_GpibMock:
        self.inst.write("OUTPLIML;")
        self.inst.write('FORM3')
        freqStr = self.inst.read_raw()
+       print (freqStr)
        freqStr = freqStr.replace('\n', ', ')
        freqLst = freqStr.split(",")
        freqLst = freqLst[:-1]
        #print (freqLst)
        self.freqL = [ float(freqLst[i*4]) for i in range(len(freqLst)//4)]
        self.complex_sample_list = None #np.array(None)
-
+       print ("DEBUG start freq:{: .0f}".format(self.freqL[0]))
 
   def samplePoints(self, nPoints ):
     global complex_sample_list
