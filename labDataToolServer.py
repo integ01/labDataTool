@@ -13,7 +13,7 @@ import numpy as np
 import struct
 
 import vnaGPIBMocMod as vnaMod
-import vna2PortGPIBMod as vnaMod2
+#import vna2PortGPIBMod as vnaMod2
 import sys
 
 
@@ -168,6 +168,7 @@ if __name__ == '__main__':
       MOCK=True
 
   if not MOCK:
+    import vna2PortGPIBMod as vnaMod2
     try:
       hp8753 = vnaMod2.vnaHP8753C_Gpib(Addr=16, numSamples_=2)
     except:

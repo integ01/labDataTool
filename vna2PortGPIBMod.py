@@ -175,7 +175,7 @@ class vnaHP8753C_Gpib:
 
     print("\nStop Scheduler --> Going to average data")
     if len(valuesList1)  == 0:
-      print "Error - No samples collected"
+      print ("Error - No samples collected")
       return None
     else: 
       print ("Got samples {0}, array size: {0}".format( len(valuesList1), 
