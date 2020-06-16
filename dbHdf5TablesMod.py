@@ -23,6 +23,12 @@ defaultPath = "dataDir"
 dataBaseName = "dataFile0"
 Filters = None
 
+paramV0_0 = { "Major":0, "Minor":0, "Date":"1-Dec-2019", "Notes": "Used for old data -for testing software only", "sparamKeys": ["S21Mean", "S21Var"]  }
+paramV0_1 = { "Major":0, "Minor":1, "Date":"1-June-2020", "Notes": "Used for new data - first version", "sparamKeys": ["S11", "S21"]  }
+
+
+h5VersionArr = { "v0.0": paramV0_0, "v0.1": paramV0_1}
+
 setUpP = {
     'time': None,
     'freqSt': '2GHZ',
@@ -38,7 +44,7 @@ def unixTimePostfix(time):
     return postfix
 
 def extractLabelFromPath ( path):
-       if path == None:
+       if path == None or len(path)==0:
          return "NA"
        print ("path" + path)
        if len(path)> 0 :
@@ -530,6 +536,7 @@ class hdf5DataTable:
         if sparam in  darray.attrs.sparamOffset.keys():
           off = darray.attrs.sparamOffset[sparam]
         else: 
+          print("Debug, dbHdf5: Sparam not found, " + str(sparam))
           off = 0
         freqL = darray.attrs.ff
         dL.append(darray)

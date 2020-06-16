@@ -37,6 +37,13 @@ import scipy.io as sio
 MaxTblRows = 50
 gridFrame = None
 
+extraRows = []
+version = "v0.1"
+
+versionParams = hd5Mod.h5VersionArr[version] 
+sparamSel = versionParams["sparamKeys"] #TODO - this should be 0 for S21
+#sparamArr =  [ ["S11", "S21"], ["S21Mean", "S21Mean"]]
+#sparamSel = sparamArr[0]
 
 def _pydate2wxdate(date):
      import datetime
@@ -115,12 +122,14 @@ class Frame(wx.Frame):
         Get the selection of a single cell by clicking or 
         moving the selection with the arrow keys
         """
+        global extraRows
         print ("You selected Row %s, Col %s" % (event.GetRow(),
                                                event.GetCol()))
         self.currentlySelectedCell = (event.GetRow(),
                                       event.GetCol())
         if event.GetCol() == 0:
         #if True:
+               extraRows = []
                wx.CallAfter(self.grid.EnableCellEditControl)
                #wx.CallAfter(wx.grid.Grid.EnableCellEditControl)
                #wx.CallLater(100,self.toggleCheckBox)
@@ -190,9 +199,10 @@ class Frame(wx.Frame):
           self.afterCheckBox(evt.IsChecked())
    
     def afterCheckBox(self,isChecked):
+           global extraRows
            print ('afterCheckBox',self.grid.GridCursorRow,isChecked)
            key = self.grid.GridCursorRow
-
+           extraRows = []
            if isChecked and key not in self.rowChecked:
               self.rowChecked.add(key) 
            elif key in self.rowChecked:
@@ -526,7 +536,7 @@ class MainApp(wx.App):
     
 
     #----------------------------------------------------------------------
-    def getGridSelectedRows(self):
+    def getGridSelectedRows(self, extra =[], maxRows =10, sparam="S21"):
         """
         Get whatever cells are currently selected
         """
@@ -537,8 +547,11 @@ class MainApp(wx.App):
         else:
            print("Selected cells:{}".format(self.rowChecked))
            
-        rowCList = list(self.rowChecked)
+        rowCList = list(self.rowChecked) + extra
         rowCList.sort()
+        if len(rowCList) > maxRows:
+           rowsCList = rowsCList[-maxRows:]
+
         rowCList.append(-1)
         print("Selected sort cells:{}".format(rowCList))
         rows_start = -1
@@ -554,13 +567,13 @@ class MainApp(wx.App):
           elif rows_end < rowIdx or rowIdx == -1: 
 #              if rowsIdx == -1: rows_end +=1
               print (rows_start, rows_end)
-              freqL, clist_ = self.hdStore.getRowsFreqData( self.rows, range(rows_start, rows_end), "S21Mean")
+              freqL, clist_ = self.hdStore.getRowsFreqData( self.rows, range(rows_start, rows_end), sparam)
               for rowidx in range(rows_start, rows_end):
                 st = self.rows.loc[rowidx]['misc'].decode('utf-8')
                 print (st, type(st))
                 labels.append(hd5Mod.extractLabelFromPath( st) )
 
-              clist = clist_ + clist
+              clist = clist + clist_
               rows_start = rowIdx 
               rows_end = rowIdx + 1
           else:
@@ -592,11 +605,15 @@ class MainApp(wx.App):
         '''
 
     def dbt_buttonPlotClick(self, event):
+        global sparamSel
+        freqL, clist, labels = self.getGridSelectedRows(sparam=sparamSel[0])
+        _, clist2, _ = self.getGridSelectedRows(sparam=sparamSel[1])
 
-        freqL, clist, labels = self.getGridSelectedRows()
-        print("number of pLots:{}".format(len(clist)))
+        print("number of pLots {}:{}".format(sparamSel[0], len(clist)))
+        print("number of pLots {}:{}".format(sparamSel[1], len(clist2)))
         print(labels) 
         if len(clist)>0:
+#          samplePlot.plotMeasLabels3(freqL, clist, clist2, labels) 
           samplePlot.plotMeasLabels(freqL, clist, labels) 
 
         #cells = self.myGrid.GetSelectedCells()
@@ -724,8 +741,8 @@ class MainApp(wx.App):
         
 
         
-        nrows = min(MaxTblRows, len(self.rows))
-        
+        nrows = min(MaxTblRows-1, len(self.rows))
+        # TODO 0 check this for out of bound        
         self.dispOnGrid(self.rows, nrows)
         
         #self.dispOnFrameGrid(self.rows, nrows)
@@ -895,12 +912,19 @@ class MainApp(wx.App):
 
      #----------------------------------------------------------------------
     def openFileClickCommon(self, filepath):
+
       filename = os.path.basename(filepath)
       filepath = filepath[:-len(filename)-1]
       if filepath == '':
             filename = self.dataBaseName
             filepath = self.dataBasePath
+#      if filename == "ExperData_Aaron": #"dataFile0"
+#        sparamSel = sparamArr[1]
+#      else:      
+      #sparamSel = vesionParams["sparamKeys"][1] #TODO - this should be 0 for S21
+
       print ("DB Open file event:" + filepath + "~~" + filename)
+      
       filters1=tables.Filters(complevel=0)
       restore = True
       try:
@@ -963,6 +987,9 @@ class MainApp(wx.App):
           self.m_buttonConnect.SetBackgroundColour('gray')
 
     def m_buttonStopOnButtonClick( self, event ):
+       global extraRows
+
+       extraRows = []
        print ("End of Test")
 #      event.Skip()
        print('LabExper0_support.btnDonePress')
@@ -1050,6 +1077,8 @@ class MainApp(wx.App):
 
     def m_buttonMeasureOnButtonClick( self, event ):
       global gEna
+      global extraRows
+      global sparamSel
       print ("Measure Button Presses")
       #event.Skip()
       print('LabExper0_support.btnMeasurePress')
@@ -1075,7 +1104,35 @@ class MainApp(wx.App):
  
       if self.rpcClient != None:
          samplePlot.measureRemoteCall(self.rpcClient, gEna, self.expr, hdStore=self.hdStore)
+         ##
+         #TODO - change from gui search to db search??
+         self.db_buttonSearchOnButtonClick(None)
+         print("Try to select")
+         #self.currentlySelectedCell = ( len(self.rows)-1 , 0)
+         #wx.CallAfter(self.grid.EnableCellEditControl)
+
+         #wx.PostEvent(self.GetEventHandler(), wx.PyCommandEvent(wx.EVT_GRID_LEFT_CLICKBUTTON.typeId, self.GetId()))
+         #wx.CallAfter(self.m_gridDataTable.EnableCellEditControl)
+
+         #key = self.m_gridDataTable.GridCursorRow
+         lastRowSel = len(self.rows)-1
+         print ("last Row added:" , lastRowSel)
+         #self.m_gridDataTable.SetCellValue(lastRowSel,0,True)
+         #wx.CallAfter(self.grid.DisableCellEditControl)
+
+#         self.rowChecked.add(lastRowSel) 
+         extraRows.append(lastRowSel)
+        # self.dbt_buttonPlotClick(None)
+         freqL, clist, labels = self.getGridSelectedRows(extra=extraRows, sparam=sparamSel[0])
+         _, clist2, _ = self.getGridSelectedRows(extra=extraRows, sparam=sparamSel[1])
+         print("Measure: number of pLots:{}".format(len(clist)))
+         print(labels) 
+         if len(clist)>0:
+           samplePlot.plotMeasLabelsLog(freqL, clist, clist2, labels) 
+#           samplePlot.plotMeasLabels(freqL, clist, labels) 
+
  
+
       if self.state == 1:
         self.msgLabStep(0)
       self.state = 2
@@ -1085,7 +1142,11 @@ class MainApp(wx.App):
 
 
     def m_buttonStartOnButtonClick( self, event ):
-      print ("Start Button Presses")
+
+      global extraRows
+
+      extraRows = []
+      print ("Start Button Press")
       #event.Skip()
       if self.state != 0:
         print ("Wrong State Error")

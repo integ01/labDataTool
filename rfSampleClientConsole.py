@@ -117,11 +117,71 @@ def loadScript(input_file_path):
     inData =list(f.readlines())
     f.close()
     return list(filter(lambda x: x[0] != '#' and x[0] != '!' and x[0] != '/' and x[0]!='\n', inData))
-   
+
+'''
+def plotMeasLabels2(w_,X_,X2_, labels):
+  w = np.array(w_)
+#  X = np.array(X_)
+  #cpal = ['skyblue', 'green', 'red', 'yellow', 'black', ']
+  cpal = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'indigo', 'gray', 'darkorange']
+  #plt.subplot(2,1,1)
+  XZ = zip(X_,X2_)
+  for i, (X, X2) in enumerate(XZ):
+    #magX = np.abs(X);
+    magX = 20*np.log10(np.abs(X));
+
+    #print (X)
+    plt.subplot(2,1,1)
+    plt.plot(w,magX, marker='', color=cpal[i], label = labels[i], linewidth=1)
+ #   plt.xlabel('frequency in GHZ units'); 
+    plt.ylabel('S21 |H|');
+    plt.legend()
+    plt.subplot(2,1,2)
+  #for i, X in enumerate(X2_):
+    #magX = np.abs(X);
+    magX2 = 20*np.log10(np.abs(X2));
+
+#    angX = np.angle(X);
+    plt.plot(w,magX2, marker='', color=cpal[i], label = labels[i], linewidth=1)
+    #plt.xlabel('frequency in GHZ units'); 
+    plt.ylabel('S11 |H|');
+    plt.legend()
+#    plt.title('Phase Response')
+  plt.show()
+'''
+
+def plotMeasLabelsLog(w_,X_, X2_, labels):
+  w = np.array(w_)
+#  X = np.array(X_)
+  #cpal = ['skyblue', 'green', 'red', 'yellow', 'black', ']
+  cpal = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'indigo', 'gray', 'darkorange']
+  plt.subplot(2,1,1)
+  plt.ylabel('S21 |H|');
+  for i, X in enumerate(X_):
+    #magX = np.abs(X);
+    magX = 20*np.log10(np.abs(X));
+    #print (X)
+    plt.plot(w,magX, marker='', color=cpal[i], label = labels[i], linewidth=1)
+ #   plt.xlabel('frequency in GHZ units'); 
+  plt.legend()
+  plt.subplot(2,1,2)
+  plt.xlabel('frequency in GHZ units'); 
+  plt.ylabel('S11 |H|');
+  for i, X in enumerate(X2_):
+    #magX = np.abs(X);
+    magX = 20*np.log10(np.abs(X));
+    #angX = np.angle(X);
+    plt.plot(w,magX, marker='', color=cpal[i], linewidth=1)
+    #plt.legend()
+#    plt.title('Phase Response')
+  #plt.legend()
+  plt.show()
+ 
 def plotMeasLabels(w_,X_, labels):
   w = np.array(w_)
 #  X = np.array(X_)
-  cpal = ['skyblue', 'green', 'red', 'yellow']
+  #cpal = ['skyblue', 'green', 'red', 'yellow', 'black', ']
+  cpal = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'indigo', 'gray', 'darkorange']
   plt.subplot(2,1,1)
   for i, X in enumerate(X_):
     magX = np.abs(X);
@@ -172,7 +232,7 @@ def plotMeas2(title, w_,X_):
   plt.subplot(2,1,1)
   plt.plot(w,magX)
   plt.xlabel('frequency in GHZ units'); 
-  plt.ylabel(title+': |H|');
+  plt.ylabel(title+':20 log |H|');
   plt.subplot(2,1,2)
   plt.plot(w,angX)
   plt.xlabel('frequency in GHZ units'); 
@@ -359,8 +419,9 @@ def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None):
 
         #TODO - add this to the read fields
         #freqL = np.linspace(2e+9,3e+9,201)
-        plotMeas2('S11', ffs[0], complexSamples[samplesOffIndex["S11"]])
-        plotMeas2('S21', ffs[0], complexSamples[samplesOffIndex["S21"]])
+        #plotMeas2('S11', ffs[0], complexSamples[samplesOffIndex["S11"]])
+        #plotMeas2('S21', ffs[0], complexSamples[samplesOffIndex["S21"]])
+
 #        plotMeas2('S21', ffs[0], complexSamples[1])
 
 
