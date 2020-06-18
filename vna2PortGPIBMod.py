@@ -6,7 +6,7 @@ from datetime import timedelta
 import threading, time 
 import visa
 import numpy as np
-
+#import pdb
 
 TIMEOUT = 3.0#0.8805
 valuesList1 = []
@@ -69,6 +69,29 @@ def twoPortSample():
   print ("{0}: Add Sample, time {1:f}".format(SAMPLES-count, time.time()) )
 
  
+def onePortMultiSample():
+  global valuesList1
+  global valuesList2
+  global count
+  global INST
+  
+  # Sample data
+  INST.query('OPC?;SING;')
+  count -=1
+  values2 = INST.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)
+  #INST.write('CHAN1')
+  time.sleep(0.1) #TODO - is this needed?
+  INST.write("CHAN2")
+  INST.write('S11')
+  INST.query('OPC?;SING;')
+  values1 = INST.query_binary_values( 'OUTPDATA',datatype='d', header_fmt='hp', is_big_endian=True)
+  INST.write("CHAN2")
+  INST.write('S21')
+
+
+  valuesList1.append(values1)
+  valuesList2.append(values2)
+  print ("{0}: Add Sample, time {1:f}".format(SAMPLES-count, time.time()) )
 
 
 def orderValues2(val):
@@ -111,7 +134,8 @@ class vnaHP8753C_Gpib:
 #       self.count = numSamples_
        self.numSamples = numSamples_
 
-       self.twoPortSetup()
+#       self.twoPortSetup()
+       self.onePortMultiSetup()
 
   def twoPortSetup(self):
     self.inst.write("CHAN1")
@@ -121,8 +145,18 @@ class vnaHP8753C_Gpib:
     self.inst.write('FORM3')
     self.inst.write('STAR2GHZ')
 
+  def onePortMultiSetup(self):
+   # self.inst.write("CHAN1")
+   # self.inst.write('S11')
+    self.inst.write("CHAN2")
+    self.inst.write('S21')
+    self.inst.write('FORM3')
+    self.inst.write('STAR2GHZ')
+
   def setFreqList(self, nPoints):
 
+    print ("Set FreqList")
+#    pdb.set_trace()
     self.inst.write("POIN?;")
   #TODO-set points 
     pointStr = self.inst.read()#"POIN {0};".format(numpoints)
@@ -137,6 +171,7 @@ class vnaHP8753C_Gpib:
     freqLst = freqStr.split(",")
 
     self.freqL = [ float(freqLst[i*4]) for i in range(len(freqLst)/4)]
+    print ("Freq start:{}, end:{}".format(freqLst[0], freqLst[-1]))
     return self.freqL
 
 
@@ -170,7 +205,8 @@ class vnaHP8753C_Gpib:
     tick = threading.Event()
     while not tick.wait(TIMEOUT):
        if count > 0:
-          twoPortSample()
+          #twoPortSample()
+          onePortMultiSample()
        else: break
 
     print("\nStop Scheduler --> Going to average data")
