@@ -150,13 +150,13 @@ def plotMeasLabels2(w_,X_,X2_, labels):
   plt.show()
 '''
 
-def plotMeasLabelsLog(w_,X_, X2_, labels):
+def plotMeasLabelsLog(w_,X_, X2_, labels, sparam):
   w = np.array(w_)
 #  X = np.array(X_)
   #cpal = ['skyblue', 'green', 'red', 'yellow', 'black', ']
   cpal = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'indigo', 'gray', 'darkorange']
   plt.subplot(2,1,1)
-  plt.ylabel('S21 |H|');
+  plt.ylabel('{} |H|'.format(sparam[0]))
   for i, X in enumerate(X_):
     #magX = np.abs(X);
     magX = 20*np.log10(np.abs(X));
@@ -165,8 +165,8 @@ def plotMeasLabelsLog(w_,X_, X2_, labels):
  #   plt.xlabel('frequency in GHZ units'); 
   plt.legend()
   plt.subplot(2,1,2)
-  plt.xlabel('frequency in GHZ units'); 
-  plt.ylabel('S11 |H|');
+  plt.xlabel('frequency in GHZ units')
+  plt.ylabel('{} |H|'.format(sparam[1]))
   for i, X in enumerate(X2_):
     #magX = np.abs(X);
     magX = 20*np.log10(np.abs(X));
@@ -365,7 +365,7 @@ def dbQuery(hdStore, cmd, parami, sp):
         clist.append(complex_sample)
       return ( freqL, clist)
 
-def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None):
+def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None, plot=False):
       # ['Meas_id', 'ENADataMode', 'NPoints', 'fSTAR', 'fSTOP', 'fCENT', 'fSPAN',
       # 'dFormat', 'S11', 'S21', 'S12', 'S22' ]
         #enaP = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 2, -1, -1])
@@ -394,9 +394,9 @@ def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None):
              complexSamples12.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
           if sampId[1] == guiRpc_pb2.SampleArray.S22:
              complexSamples22.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
-        offsetS11 = 0 if len(complexSamples11)>0 else -1
+        offsetS21 = 0 if len(complexSamples11)>0 else -1
         offSum = len(complexSamples11)
-        offsetS21 = offSum if len(complexSamples21)>0 else -1
+        offsetS11 = offSum if len(complexSamples21)>0 else -1
         offSum += len(complexSamples21)
         offsetS12 = offSum if len(complexSamples12)>0 else -1
         offSum += len(complexSamples12)
@@ -419,8 +419,10 @@ def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None):
 
         #TODO - add this to the read fields
         #freqL = np.linspace(2e+9,3e+9,201)
-        #plotMeas2('S11', ffs[0], complexSamples[samplesOffIndex["S11"]])
-        #plotMeas2('S21', ffs[0], complexSamples[samplesOffIndex["S21"]])
+        if plot == True:
+            print ("Ploting: {}".format(plot))
+            plotMeas2('S11', ffs[0], complexSamples[samplesOffIndex["S11"]])
+            plotMeas2('S21', ffs[0], complexSamples[samplesOffIndex["S21"]])
 
 #        plotMeas2('S21', ffs[0], complexSamples[1])
 

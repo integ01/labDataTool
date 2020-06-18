@@ -440,7 +440,7 @@ class MainApp(wx.App):
         self.expr_BaseComment.WriteText("Non Ionized")
         self.expr_volume.WriteText("70")
         #self.m_gridDataTable.AppendRows(1)
-        rows = None      
+        self.rows = None      
         return True
  #----------------------------------------------------------------------
     
@@ -1072,7 +1072,7 @@ class MainApp(wx.App):
 
  
       if self.rpcClient != None:
-         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp, hdStore=None)
+         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp, hdStore=None, plot=True)
  
 
     def m_buttonMeasureOnButtonClick( self, event ):
@@ -1128,7 +1128,7 @@ class MainApp(wx.App):
          print("Measure: number of pLots:{}".format(len(clist)))
          print(labels) 
          if len(clist)>0:
-           samplePlot.plotMeasLabelsLog(freqL, clist, clist2, labels) 
+           samplePlot.plotMeasLabelsLog(freqL, clist, clist2, labels, sparamSel) 
 #           samplePlot.plotMeasLabels(freqL, clist, labels) 
 
  
