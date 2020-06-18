@@ -15,7 +15,7 @@ import struct
 import vnaGPIBMocMod as vnaMod
 #import vna2PortGPIBMod as vnaMod2
 import sys
-
+#import pdb
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -70,7 +70,10 @@ class GuiRpcServicer(guiRpc_pb2_grpc.GuiRpcServicer):
      cmdStop = "STOP {}.E+6;".format(int(request.freq_STOP))
      print(cmdStart,cmdStop)
      self.vnaMach.inst.write("STAR {}.E+6;".format(int(request.freq_STAR)))
+     time.sleep(0.5)
      self.vnaMach.inst.write("STOP {}.E+6;".format(int(request.freq_STOP)))
+     time.sleep(0.5)
+     #pdb.set_trace()
      self.vnaMach.setFreqList(201)
      ###### 
      # Get sampls from vna 
@@ -170,7 +173,7 @@ if __name__ == '__main__':
   if not MOCK:
     import vna2PortGPIBMod as vnaMod2
     try:
-      hp8753 = vnaMod2.vnaHP8753C_Gpib(Addr=16, numSamples_=2)
+      hp8753 = vnaMod2.vnaHP8753C_Gpib(Addr=16, numSamples_=10)
     except:
       print ("Unexpected error:", sys.exc_info()[0])
       print ("Probably your Network Analyzer is not powered up or initialized")
