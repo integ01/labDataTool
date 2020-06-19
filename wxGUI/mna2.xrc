@@ -15,7 +15,7 @@
 				<object class="wxNotebook" name="m_notebook1">
 					<object class="notebookpage">
 						<label>VNA</label>
-						<selected>0</selected>
+						<selected>1</selected>
 						<object class="wxPanel" name="m_panelVNA">
 							<style>wxTAB_TRAVERSAL</style>
 							<object class="wxBoxSizer">
@@ -701,7 +701,7 @@
 												</object>
 												<object class="sizeritem">
 													<option>1</option>
-													<flag>wxALIGN_RIGHT|wxEXPAND</flag>
+													<flag>wxEXPAND</flag>
 													<border>5</border>
 													<object class="wxBoxSizer">
 														<orient>wxHORIZONTAL</orient>
@@ -891,7 +891,7 @@
 															<flag>wxALL</flag>
 															<border>5</border>
 															<object class="wxChoice" name="m_choiceProcedure">
-																<selection>1</selection>
+																<selection>0</selection>
 																<content>
 																	<item>Fixed Volume</item>
 																	<item>Fixed Concentrate</item>
@@ -1643,7 +1643,7 @@
 					</object>
 					<object class="notebookpage">
 						<label>Data Table</label>
-						<selected>1</selected>
+						<selected>0</selected>
 						<object class="wxPanel" name="m_panelDBTable">
 							<style>wxTAB_TRAVERSAL</style>
 							<object class="wxBoxSizer">
@@ -1670,7 +1670,7 @@
 										</object>
 										<object class="sizeritem">
 											<option>1</option>
-											<flag>wxALIGN_RIGHT</flag>
+											<flag>wxALIGN_CENTER</flag>
 											<border>5</border>
 											<object class="wxBoxSizer">
 												<orient>wxVERTICAL</orient>
@@ -1700,6 +1700,59 @@
 																<default>0</default>
 																<markup>0</markup>
 																<bitmap />
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>1</option>
+													<flag>wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxStaticText" name="m_staticText164111">
+																<label>Select:</label>
+																<wrap>-1</wrap>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxCheckBox" name="m_checkBoxS11P">
+																<label>S11</label>
+																<checked>0</checked>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxCheckBox" name="m_checkBoxS21P">
+																<label>S21</label>
+																<checked>0</checked>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxCheckBox" name="m_checkBoxS12P">
+																<label>S12</label>
+																<checked>0</checked>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL</flag>
+															<border>5</border>
+															<object class="wxCheckBox" name="m_checkBoxS22P">
+																<label>S22</label>
+																<checked>0</checked>
 															</object>
 														</object>
 													</object>
@@ -1751,6 +1804,13 @@
 					</object>
 				</object>
 			</object>
+		</object>
+	</object>
+	<object class="wxMenu" name="m_menu1">
+		<label>MyMenu</label>
+		<object class="wxMenuItem" name="m_menuItem1">
+			<label>Import H5</label>
+			<help></help>
 		</object>
 	</object>
 </resource>
