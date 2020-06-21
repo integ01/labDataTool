@@ -177,7 +177,7 @@ def plotMeasLabelsLog(w_,X_, X2_, labels, sparam):
   #plt.legend()
   plt.show()
  
-def plotMeasLabels(w_,X_, labels):
+def plotMeasLabels(w_,X_, labels,sparam):
   w = np.array(w_)
 #  X = np.array(X_)
   #cpal = ['skyblue', 'green', 'red', 'yellow', 'black', ']
@@ -188,7 +188,7 @@ def plotMeasLabels(w_,X_, labels):
     #print (X)
     plt.plot(w,magX, marker='', color=cpal[i], label = labels[i], linewidth=1)
  #   plt.xlabel('frequency in GHZ units'); 
-    plt.ylabel('|H|');
+    plt.ylabel('{} |H|'.format(sparam))
     plt.legend()
   plt.subplot(2,1,2)
   for i, X in enumerate(X_):
@@ -365,7 +365,23 @@ def dbQuery(hdStore, cmd, parami, sp):
         clist.append(complex_sample)
       return ( freqL, clist)
 
-def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None, plot=False):
+####################################################################
+#  measureRemoteCall function:
+#   Activates measurment on the remote VNA machince using the rpcClinet
+#   and return measurement results.
+#  Input:
+#     rpcClient - rpc Client class to access the remote VNA
+#     enaSetup - Setup of the remote vna
+#     setUp - Experiment setup.
+#     plot - Plot current measurement results.
+#  Output:
+#     enaSetup - same as input param with updates.
+#     ndarry: Results of the measurements in dict with fields 
+#      {'raw', 'ff', 'offset', 'numOfMeasure'}
+#
+#  Notes :  removed hdStore, setUp parameters/option.
+#####################################################################
+def measureRemoteCall(rpcClient,  enaSetup, plot=False):
       # ['Meas_id', 'ENADataMode', 'NPoints', 'fSTAR', 'fSTOP', 'fCENT', 'fSPAN',
       # 'dFormat', 'S11', 'S21', 'S12', 'S22' ]
         #enaP = setEnaParams( [0, 1, 801, 1e9, 2e9, 1.5e9, 1e9, 0, 1, 2, -1, -1])
@@ -394,6 +410,7 @@ def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None, plot=False):
              complexSamples12.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
           if sampId[1] == guiRpc_pb2.SampleArray.S22:
              complexSamples22.append( np.array((samp[0::2] + 1j*samp[1::2]),dtype=np.complex128) )
+        ## TODO assert numOfMeasure == self.numOfMeasurement
         offsetS21 = 0 if len(complexSamples11)>0 else -1
         offSum = len(complexSamples11)
         offsetS11 = offSum if len(complexSamples21)>0 else -1
@@ -408,15 +425,16 @@ def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None, plot=False):
         print ("samplesS12 #:{}".format( len(complexSamples12)))
         print ("samplesS22 #:{}".format( len(complexSamples22)))
         complexSamples = complexSamples11 +  complexSamples21 +  complexSamples12 +  complexSamples22
+        
+        numOfMeasure = len(complexSamples11)
         samplesOffIndex = {"S11":  offsetS11, "S21": offsetS21, 
-        "S12":  offsetS12, "S22": offsetS22 }
+        "S12":  offsetS12, "S22": offsetS22, "Step": numOfMeasure }
                          
-        ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0], 'offset':samplesOffIndex }
+        ndarry = {'raw': (np.vstack(complexSamples).transpose()), 'ff': ffs[0], 'offset':samplesOffIndex}
         print (ndarry['raw'].shape)
         ###### TODO - add connection to db
-        if hdStore != None:
-          hdStore.aggParams2TableWrite(setUp, ndarry, enaSetup, grp='/lab0') 
-
+#        if hdStore != None:
+#          hdStore.aggParams2TableWrite(setUp, ndarry, enaSetup, grp='/lab0') 
         #TODO - add this to the read fields
         #freqL = np.linspace(2e+9,3e+9,201)
         if plot == True:
@@ -425,6 +443,7 @@ def measureRemoteCall(rpcClient,  enaSetup, setUp, hdStore=None, plot=False):
             plotMeas2('S21', ffs[0], complexSamples[samplesOffIndex["S21"]])
 
 #        plotMeas2('S21', ffs[0], complexSamples[1])
+        return ( enaSetup, ndarry)
 
 
 def measureRemoteCall_0(rpcClient):

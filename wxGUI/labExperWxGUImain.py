@@ -31,6 +31,7 @@ import rfSampleClientConsole as samplePlot
 
 from pathlib import Path
 import pdb
+from enum import Enum
 
 import scipy.io as sio
 
@@ -45,6 +46,12 @@ sparamSel = versionParams["sparamKeys"] #TODO - this should be 0 for S21
 #sparamArr =  [ ["S11", "S21"], ["S21Mean", "S21Mean"]]
 #sparamSel = sparamArr[0]
 
+class StateO(Enum):
+     IDLE = 0
+     MEAS_WAIT_CONT = 2
+     START = 1
+
+     
 def _pydate2wxdate(date):
      import datetime
      assert isinstance(date, (datetime.datetime, datetime.date))
@@ -287,9 +294,13 @@ class MainApp(wx.App):
         self.dbt_buttonExport = xrc.XRCCTRL(self.panelDBTbl, "dbt_buttonExport")
         self.dbt_buttonPrev = xrc.XRCCTRL(self.panelDBTbl, "m_buttonPrev")
         self.dbt_buttonNext = xrc.XRCCTRL(self.panelDBTbl, "m_buttonNext")
+        self.dbt_checkBoxS11 = xrc.XRCCTRL(self.panelDBTbl, 'm_checkBoxS11P')
+        self.dbt_checkBoxS21 = xrc.XRCCTRL(self.panelDBTbl, 'm_checkBoxS21P')
+        self.dbt_checkBoxS12 = xrc.XRCCTRL(self.panelDBTbl, 'm_checkBoxS12P')
+        self.dbt_checkBoxS22 = xrc.XRCCTRL(self.panelDBTbl, 'm_checkBoxS22P')
+
         self.db_buttonPlot2 = xrc.XRCCTRL(self.panelDB, "m_buttonPlot2")
         self.db_buttonExport2 = xrc.XRCCTRL(self.panelDB, "m_buttonExport2")
-
 	# Grid
         self.myGrid = self.m_gridDataTable
         print (type(self.m_gridDataTable ))
@@ -414,7 +425,7 @@ class MainApp(wx.App):
         self.rowChecked = set([])
         self.cb = None
         self.frameMain.Show(True)
-        self.state  = 0
+        self.state  = StateO(StateO.IDLE)
         self.connectUrl = "127.0.0.1"
         self.connectState = 0
         #dateStr= datetime.datetime.now().strftime("%d/%m/%y")
@@ -588,6 +599,12 @@ class MainApp(wx.App):
        #TODO
        pass
 
+  #############################################################
+  #
+  # func dbt_buttonExportClick
+  # In: data Tab - Export Button Event 
+  #
+  #############################################################
     def dbt_buttonExportClick(self, event):
         print("Press Export")
         print ("Doing import test")
@@ -606,31 +623,22 @@ class MainApp(wx.App):
 
     def dbt_buttonPlotClick(self, event):
         global sparamSel
-        freqL, clist, labels = self.getGridSelectedRows(sparam=sparamSel[0])
-        _, clist2, _ = self.getGridSelectedRows(sparam=sparamSel[1])
 
-        print("number of pLots {}:{}".format(sparamSel[0], len(clist)))
-        print("number of pLots {}:{}".format(sparamSel[1], len(clist2)))
-        print(labels) 
+
+        clist = []
+        if int(self.dbt_checkBoxS11.GetValue()) == 1:
+           sparamS = sparamSel[0]
+           freqL, clist, labels = self.getGridSelectedRows(sparam=sparamSel[0])
+
+        if int(self.dbt_checkBoxS21.GetValue()) == 1:
+           sparamS = sparamSel[1]
+           freqL, clist, labels = self.getGridSelectedRows(sparam=sparamSel[1])
+
         if len(clist)>0:
-#          samplePlot.plotMeasLabels3(freqL, clist, clist2, labels) 
-          samplePlot.plotMeasLabels(freqL, clist, labels) 
+          print("number of pLots {}:{}".format(sparamSel[0], len(clist)))
+          print(labels) 
+          samplePlot.plotMeasLabels(freqL, clist, labels, sparamS) 
 
-        #cells = self.myGrid.GetSelectedCells()
-#        if not cells:
-#            if self.myGrid.GetSelectionBlockTopLeft():
-#                top_left = self.myGrid.GetSelectionBlockTopLeft()[0]
-#                bottom_right = self.myGrid.GetSelectionBlockBottomRight()[0]
-                #self.printSelectedCells(top_left, bottom_right)
-#                rows_start = top_left[0]
-#                rows_end = bottom_right[0]
-#                freqL, clist = samplePlot.getRowsFreqData(self.hdStore, self.rows, range(rows_start, rows_end+1), "S21Mean") # TODO - fix offset
-#                #pdb.set_trace()
-#                samplePlot.plotMeas(freqL, clist) 
-#            else:
-#                print (self.currentlySelectedCell)
-#        else:
-#            print (cells)
      #----------------------------------------------------------------------
         
 
@@ -664,18 +672,33 @@ class MainApp(wx.App):
 
      #----------------------------------------------------------------------
     def msgLabStep(self, i, msg=''):
+      res = False
       if msg == '':
         if i==1:
           self.m_listBox1.Clear()
         #self.m_listBox1.Append(messages.fixedVolMsgStep[i].format(self.expr['material1'], self.expr['volumeExchange'] ))
           msg = messages.fixedVolMsgStep[i].format(self.expr['component1'], self.expr['_volumeExchange'] )
+          
         else:
           self.m_listBox1.Clear()
           #self.m_listBox1.Append( messages.fixedVolMsgStep[i])
           msg =  messages.fixedVolMsgStep[i]
 
       self.m_listBox1.Append( msg) 
-      wx.MessageBox(msg, 'Info', wx.OK | wx.ICON_INFORMATION)
+      if i == 0 and "Measurment Do" in msg:
+        res = self.msgLabExperResultYN()
+      else:
+        wx.MessageBox(msg, 'Info', wx.OK | wx.ICON_INFORMATION)
+      return res
+
+    def msgLabExperResultYN(self):
+         dlg = wx.MessageDialog(None, "Save Experiment Results (OK)?",'Result OK', 
+                 wx.YES_NO | wx.NO_DEFAULT|wx.ICON_QUESTION)
+         if dlg.ShowModal() == wx.ID_YES:
+            return True
+         else:
+            return False
+  
 
 # Virtual event handlers, overide them in your derived class
      #----------------------------------------------------------------------
@@ -690,6 +713,15 @@ class MainApp(wx.App):
         print (self.sel_date2.Format("%d-%m-%Y"))
 
      #----------------------------------------------------------------------
+
+
+  #############################################################
+  #
+  # func db_buttonSearchOnButtonClick
+  # In: data Tab - Search Button Event 
+  #
+  #############################################################
+
     def db_buttonSearchOnButtonClick(self, event):
         # TODO - add table presentation option
         param = 0
@@ -733,7 +765,10 @@ class MainApp(wx.App):
               param = int(self.sel_date.Format("%s")) 
               param2 = int(self.sel_date2.Format("%s")) 
               tDict = { cmd  : [param, param2]}
-              self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, tDict)
+              if self.hdStore != None:
+                self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, tDict)
+              else: 
+                pass # TODO - add error condition.
               #self.rows = samplePlot.dbQueryExprTblByDict(self.hdStore, cmd, parami)
             except ValueError:
               print ("Wrong value in Dates")
@@ -939,18 +974,38 @@ class MainApp(wx.App):
       # End of While 
       self.db_button6DBFileOpen.SetBackgroundColour('blue')
       self.vna_button6DBFileOpen.SetBackgroundColour('blue')
-
+  #############################################################
+  #
+  # func vna_buttonDBFileOpenClick
+  # In: VNA Tab - Open data base file event 
+  #
+  #############################################################
+  
     def vna_buttonDBFileOpenClick(self, event):
       filepath = self.vna_textCtrlDBFile.GetValue()
       self.db_textCtrlDBFile.SetValue(filepath)
       self.openFileClickCommon(filepath)
+
+
+  #############################################################
+  #
+  # func db_buttonDBFileOpenClick
+  # In: DataBase Tab - Open data base file event 
+  #
+  #############################################################
 
     def db_buttonDBFileOpenClick(self, event):
       filepath = self.db_textCtrlDBFile.GetValue()
       self.vna_textCtrlDBFile.SetValue(filepath)
       self.openFileClickCommon(filepath)
 
-     
+  #############################################################
+  #
+  # func m_buttonConnectOnButtonClick
+  # In: VNA Tab - Connect to VNA Button Event 
+  #
+  #############################################################
+
     def m_buttonConnectOnButtonClick( self, event ):
              
       ip1 = self.m_textIp1.GetValue()
@@ -986,6 +1041,14 @@ class MainApp(wx.App):
           self.connectState = 0
           self.m_buttonConnect.SetBackgroundColour('gray')
 
+
+  #############################################################
+  #
+  # func m_buttonStopOnButtonClick
+  # In: ExperimentTab - Stop Button Event 
+  #
+  #############################################################
+
     def m_buttonStopOnButtonClick( self, event ):
        global extraRows
 
@@ -994,7 +1057,7 @@ class MainApp(wx.App):
 #      event.Skip()
        print('LabExper0_support.btnDonePress')
        sys.stdout.flush()
-       self.state = 0
+       self.state  = self.state.IDLE
        #currSess = rfSystem.maxsess
        #rfSystem.maxsess += 1
        #w.Text_Session.delete(1.0, tk.END)
@@ -1009,16 +1072,26 @@ class MainApp(wx.App):
 
        #rfSystem.getDataPlot('Session', currSess)
 
+
+
+  #############################################################
+  #
+  # func m_buttonContOnButtonClick
+  # In: ExperimentTab - Continue Button Event 
+  #
+  #############################################################
+
     def m_buttonContOnButtonClick( self, event ):
-      if self.state == 0:
+      if self.state == self.state.IDLE:
          print("Error - Need to start session first")
          return
       print('LabExper0_support.btnContinuePress')
-      if self.state != 2:
+#      if self.state != 2:
+      if self.state != self.state.MEAS_WAIT_CONT:
        print ("Wrong state")
        return
       self.msgLabStep(1)
-      self.state = 1
+      self.state = self.state.START
       sys.stdout.flush()
       self.expr['_testNumber'] -= 1
       tidx = -self.expr['_testNumber'] + self.numM + 1
@@ -1040,6 +1113,15 @@ class MainApp(wx.App):
       # TODO - add concentration increment
       # w.TextCurrentConc1.insert(1.0, str(expr['mat1Concen']))
 
+
+
+
+  #############################################################
+  #
+  # func vna_buttonVNATestOnButtonClick
+  # In: vna tab - Test VNA Button Event - to test VNA operation
+  #
+  #############################################################
     def vna_buttonVNATestOnButtonClick(self, event):
       global gEna
       print ("Test VNA Measure Button Pressed")
@@ -1072,8 +1154,17 @@ class MainApp(wx.App):
 
  
       if self.rpcClient != None:
-         samplePlot.measureRemoteCall(self.rpcClient, gEna, setUp, hdStore=None, plot=True)
+         enaSetup, ndarry = samplePlot.measureRemoteCall(self.rpcClient, gEna, plot=True)
  
+
+   
+ 
+  #############################################################
+  #
+  # func m_buttonMeasureOnButtonClick
+  # In: ExperimentTab - Measurement Button Event 
+  #
+  #############################################################
 
     def m_buttonMeasureOnButtonClick( self, event ):
       global gEna
@@ -1083,7 +1174,7 @@ class MainApp(wx.App):
       #event.Skip()
       print('LabExper0_support.btnMeasurePress')
       sys.stdout.flush()
-      if self.state == 0 or self.state == 2:
+      if self.state != self.state.START:
         print("Error - Need to start session first")
         return
       ############################3
@@ -1103,7 +1194,7 @@ class MainApp(wx.App):
       gEna['S22'] = int(self.S22)*8
  
       if self.rpcClient != None:
-         samplePlot.measureRemoteCall(self.rpcClient, gEna, self.expr, hdStore=self.hdStore)
+         enaSetupRes, ndarryRes = samplePlot.measureRemoteCall(self.rpcClient, gEna )
          ##
          #TODO - change from gui search to db search??
          self.db_buttonSearchOnButtonClick(None)
@@ -1117,29 +1208,53 @@ class MainApp(wx.App):
          #key = self.m_gridDataTable.GridCursorRow
          lastRowSel = len(self.rows)-1
          print ("last Row added:" , lastRowSel)
-         #self.m_gridDataTable.SetCellValue(lastRowSel,0,True)
-         #wx.CallAfter(self.grid.DisableCellEditControl)
-
-#         self.rowChecked.add(lastRowSel) 
          extraRows.append(lastRowSel)
-        # self.dbt_buttonPlotClick(None)
+
+
          freqL, clist, labels = self.getGridSelectedRows(extra=extraRows, sparam=sparamSel[0])
+         #pdb.set_trace()
+         if len(freqL) == 0:
+           freqL = ndarryRes['ff']
+         arrOffsetStart = ndarryRes['offset'][sparamSel[0]]
+         arrOffsetEnd = arrOffsetStart + ndarryRes['offset']['Step']
+
+         clist.append(ndarryRes['raw'][:,arrOffsetStart:arrOffsetEnd ])
+        
+         labels.append(self.expr['misc'])
          _, clist2, _ = self.getGridSelectedRows(extra=extraRows, sparam=sparamSel[1])
+         arrOffsetStart = ndarryRes['offset'][sparamSel[1]]
+         arrOffsetEnd = arrOffsetStart + ndarryRes['offset']['Step']
+
+         clist2.append(ndarryRes['raw'][:,arrOffsetStart:arrOffsetEnd ])
+
+
+         
          print("Measure: number of pLots:{}".format(len(clist)))
          print(labels) 
          if len(clist)>0:
            samplePlot.plotMeasLabelsLog(freqL, clist, clist2, labels, sparamSel) 
-#           samplePlot.plotMeasLabels(freqL, clist, labels) 
-
- 
-
-      if self.state == 1:
-        self.msgLabStep(0)
-      self.state = 2
 
 
+      res = False
+      if self.state == self.state.START:
+        res = self.msgLabStep(0)
+      if res:
+         #
+         ##### Store results 
+         #
+         self.hdStore.aggParams2TableWrite(self.expr, ndarryRes, enaSetupRes, grp='/lab0')
+
+      self.state = self.state.MEAS_WAIT_CONT
 
 
+
+
+  #############################################################
+  #
+  # func m_buttonStartOnButtonClick
+  # In: ExperimentTab - Start Button Event 
+  #
+  #############################################################
 
     def m_buttonStartOnButtonClick( self, event ):
 
@@ -1148,7 +1263,7 @@ class MainApp(wx.App):
       extraRows = []
       print ("Start Button Press")
       #event.Skip()
-      if self.state != 0:
+      if self.state != self.state.IDLE:
         print ("Wrong State Error")
         return
       print('LabExper0_support. Start the Experiment')
@@ -1179,7 +1294,7 @@ class MainApp(wx.App):
               except ValueError:
                 print ("Wrong value in {}-- Please Correct ".format(k))
                 return
-      self.state = 1
+      self.state = self.state.START
 #      self.m_listBox1.Clear()
 #      self.m_listBox1.Append(messages.fixedVolMsgStart[0].format(self.session, self.expr['material1']) )
       self.msgLabStep(0, msg= messages.fixedVolMsgStart[0].format(self.session, self.expr['component1']) )
