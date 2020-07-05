@@ -39,10 +39,10 @@ MaxTblRows = 50
 gridFrame = None
 
 extraRows = []
-version = "v0.1"
+#version = "v0.1"
 
-versionParams = hd5Mod.h5VersionArr[version] 
-sparamSel = versionParams["sparamKeys"] #TODO - this should be 0 for S21
+#versionParams = hd5Mod.h5VersionArr[version] 
+#sparamSel = versionParams["sparamKeys"] #TODO - this should be 0 for S21
 #sparamArr =  [ ["S11", "S21"], ["S21Mean", "S21Mean"]]
 #sparamSel = sparamArr[0]
 
@@ -250,6 +250,8 @@ class MainApp(wx.App):
         self.m_buttonStop = xrc.XRCCTRL(self.panelMain, "m_buttonStop")
         self.m_buttonStart = xrc.XRCCTRL(self.panelMain, "m_buttonStart")
         self.m_buttonCont = xrc.XRCCTRL(self.panelMain, "m_buttonCont")
+        self.m_datePicker = xrc.XRCCTRL(self.panelMain, "m_datePicker1")
+        self.m_timePicker = xrc.XRCCTRL(self.panelMain, "m_timePicker1")
 
 
         self.m_textIp1 = xrc.XRCCTRL(self.panelVNA, "m_textIp1")
@@ -274,10 +276,10 @@ class MainApp(wx.App):
         self.vna_buttonVNATest = xrc.XRCCTRL(self.panelVNA, 'm_buttonVNATest')
 
         self.vna_textCtrlDBFile =  xrc.XRCCTRL(self.panelVNA, 'm_textCtrlDBFile1')
-        self.vna_button6DBFileOpen = xrc.XRCCTRL(self.panelVNA, 'm_button6DBFileOpen1')
+        self.vna_buttonDBFileOpen = xrc.XRCCTRL(self.panelVNA, 'm_button6DBFileOpen1')
 
         self.db_textCtrlDBFile =  xrc.XRCCTRL(self.panelDB, 'm_textCtrlDBFile')
-        self.db_button6DBFileOpen = xrc.XRCCTRL(self.panelDB, 'm_button6DBFileOpen')
+        self.db_buttonDBFileOpen = xrc.XRCCTRL(self.panelDB, 'm_button6DBFileOpen')
         self.db_radioTime_Today = xrc.XRCCTRL(self.panelDB, 'm_radioTime_Today')
         self.db_radioBtnTimeLastHour = xrc.XRCCTRL(self.panelDB, 'm_radioBtnTimeLastHour')
         self.db_radioBtnTime_All = xrc.XRCCTRL(self.panelDB, 'm_radioBtnTime_All')
@@ -393,8 +395,8 @@ class MainApp(wx.App):
         self.m_buttonStop.Bind( wx.EVT_BUTTON, self.m_buttonStopOnButtonClick )
         self.m_buttonCont.Bind( wx.EVT_BUTTON, self.m_buttonContOnButtonClick )
         self.m_buttonConnect.Bind( wx.EVT_BUTTON, self.m_buttonConnectOnButtonClick )
-        self.db_button6DBFileOpen.Bind(  wx.EVT_BUTTON, self.db_buttonDBFileOpenClick )
-        self.vna_button6DBFileOpen.Bind(  wx.EVT_BUTTON, self.vna_buttonDBFileOpenClick )
+        self.db_buttonDBFileOpen.Bind(  wx.EVT_BUTTON, self.db_buttonDBFileOpenClick )
+        self.vna_buttonDBFileOpen.Bind(  wx.EVT_BUTTON, self.vna_buttonDBFileOpenClick )
         
         self.db_buttonSearch.Bind( wx.EVT_BUTTON, self.db_buttonSearchOnButtonClick )
 
@@ -622,20 +624,19 @@ class MainApp(wx.App):
         '''
 
     def dbt_buttonPlotClick(self, event):
-        global sparamSel
 
 
         clist = []
         if int(self.dbt_checkBoxS11.GetValue()) == 1:
-           sparamS = sparamSel[0]
-           freqL, clist, labels = self.getGridSelectedRows(sparam=sparamSel[0])
+           sparamS = self.hdStore.sparamSel[0]
+           freqL, clist, labels = self.getGridSelectedRows(sparam=self.hdStore.sparamSel[0])
 
         if int(self.dbt_checkBoxS21.GetValue()) == 1:
-           sparamS = sparamSel[1]
-           freqL, clist, labels = self.getGridSelectedRows(sparam=sparamSel[1])
+           sparamS = self.hdStore.sparamSel[1]
+           freqL, clist, labels = self.getGridSelectedRows(sparam=self.hdStore.sparamSel[1])
 
         if len(clist)>0:
-          print("number of pLots {}:{}".format(sparamSel[0], len(clist)))
+          print("number of pLots {}:{}".format(self.hdStore.sparamSel[0], len(clist)))
           print(labels) 
           samplePlot.plotMeasLabels(freqL, clist, labels, sparamS) 
 
@@ -887,6 +888,13 @@ class MainApp(wx.App):
     def getExperFields(self):  
       print ("DBG: start of get Fields") 
       print ( int(time.time()))
+      #pdb.set_trace()
+      w = wx.DateTime()
+      tt = w.SetTimeT(time.time())
+      print(tt)
+      self.m_timePicker.SetValue(tt)
+
+
       self.expr['unix_timestamp'] = int(time.time())
       self.expr['author'] = self.m_textTester.GetValue()
       self.expr['misc'] = self.m_textNotes.GetValue()
@@ -954,9 +962,9 @@ class MainApp(wx.App):
             filename = self.dataBaseName
             filepath = self.dataBasePath
 #      if filename == "ExperData_Aaron": #"dataFile0"
-#        sparamSel = sparamArr[1]
+#        self.hdStore.sparamSel = sparamArr[1]
 #      else:      
-      #sparamSel = vesionParams["sparamKeys"][1] #TODO - this should be 0 for S21
+      #self.hdStore.sparamSel = vesionParams["sparamKeys"][1] #TODO - this should be 0 for S21
 
       print ("DB Open file event:" + filepath + "~~" + filename)
       
@@ -968,12 +976,12 @@ class MainApp(wx.App):
       except Exception as e:
           print(e, str(e))
           print("DB Exception" )
-          self.db_button6DBFileOpen.SetBackgroundColour('gray')
-          self.vna_button6DBFileOpen.SetBackgroundColour('gray')
+          self.db_buttonDBFileOpen.SetBackgroundColour('gray')
+          self.vna_buttonDBFileOpen.SetBackgroundColour('gray')
           return  
       # End of While 
-      self.db_button6DBFileOpen.SetBackgroundColour('blue')
-      self.vna_button6DBFileOpen.SetBackgroundColour('blue')
+      self.db_buttonDBFileOpen.SetBackgroundColour('blue')
+      self.vna_buttonDBFileOpen.SetBackgroundColour('blue')
   #############################################################
   #
   # func vna_buttonDBFileOpenClick
@@ -1169,7 +1177,6 @@ class MainApp(wx.App):
     def m_buttonMeasureOnButtonClick( self, event ):
       global gEna
       global extraRows
-      global sparamSel
       print ("Measure Button Presses")
       #event.Skip()
       print('LabExper0_support.btnMeasurePress')
@@ -1192,13 +1199,14 @@ class MainApp(wx.App):
       gEna['S21'] = int(self.S21)*2
       gEna['S12'] = int(self.S12)*4
       gEna['S22'] = int(self.S22)*8
- 
+      res = False  # Selection flag to save results.
       if self.rpcClient != None:
          enaSetupRes, ndarryRes = samplePlot.measureRemoteCall(self.rpcClient, gEna )
          ##
          #TODO - change from gui search to db search??
-         self.db_buttonSearchOnButtonClick(None)
-         print("Try to select")
+         try:
+           self.db_buttonSearchOnButtonClick(None)
+           print("Try to select")
          #self.currentlySelectedCell = ( len(self.rows)-1 , 0)
          #wx.CallAfter(self.grid.EnableCellEditControl)
 
@@ -1206,45 +1214,46 @@ class MainApp(wx.App):
          #wx.CallAfter(self.m_gridDataTable.EnableCellEditControl)
 
          #key = self.m_gridDataTable.GridCursorRow
-         lastRowSel = len(self.rows)-1
-         print ("last Row added:" , lastRowSel)
-         extraRows.append(lastRowSel)
+           lastRowSel = len(self.rows)-1
+           print ("last Row added:" , lastRowSel)
+           extraRows.append(lastRowSel)
 
 
-         freqL, clist, labels = self.getGridSelectedRows(extra=extraRows, sparam=sparamSel[0])
+           freqL, clist, labels = self.getGridSelectedRows(extra=extraRows, sparam=self.hdStore.sparamSel[0])
          #pdb.set_trace()
-         if len(freqL) == 0:
-           freqL = ndarryRes['ff']
-         arrOffsetStart = ndarryRes['offset'][sparamSel[0]]
-         arrOffsetEnd = arrOffsetStart + ndarryRes['offset']['Step']
+           if len(freqL) == 0:
+             freqL = ndarryRes['ff']
+           arrOffsetStart = ndarryRes['offset'][self.hdStore.sparamSel[0]]
+           arrOffsetEnd = arrOffsetStart + ndarryRes['offset']['Step']
 
-         clist.append(ndarryRes['raw'][:,arrOffsetStart:arrOffsetEnd ])
+           clist.append(ndarryRes['raw'][:,arrOffsetStart:arrOffsetEnd ])
         
-         labels.append(self.expr['misc'])
-         _, clist2, _ = self.getGridSelectedRows(extra=extraRows, sparam=sparamSel[1])
-         arrOffsetStart = ndarryRes['offset'][sparamSel[1]]
-         arrOffsetEnd = arrOffsetStart + ndarryRes['offset']['Step']
+           labels.append(self.expr['misc'])
+           _, clist2, _ = self.getGridSelectedRows(extra=extraRows, sparam=self.hdStore.sparamSel[1])
+           arrOffsetStart = ndarryRes['offset'][self.hdStore.sparamSel[1]]
+           arrOffsetEnd = arrOffsetStart + ndarryRes['offset']['Step']
 
-         clist2.append(ndarryRes['raw'][:,arrOffsetStart:arrOffsetEnd ])
+           clist2.append(ndarryRes['raw'][:,arrOffsetStart:arrOffsetEnd ])
 
 
          
-         print("Measure: number of pLots:{}".format(len(clist)))
-         print(labels) 
-         if len(clist)>0:
-           samplePlot.plotMeasLabelsLog(freqL, clist, clist2, labels, sparamSel) 
+           print("Measure: number of pLots:{}".format(len(clist)))
+           print(labels) 
+           if len(clist)>0:
+             samplePlot.plotMeasLabelsLog(freqL, clist, clist2, labels, self.hdStore.sparamSel) 
+         except:
+           print ("Measurment - Search DB Error, saving results")
+           res = True
 
+         if not res and (self.state == self.state.START):
+           res = self.msgLabStep(0)
+         if res:
+           #
+           ##### Store results 
+           #
+           self.hdStore.aggParams2TableWrite(self.expr, ndarryRes, enaSetupRes, grp='/lab0')
 
-      res = False
-      if self.state == self.state.START:
-        res = self.msgLabStep(0)
-      if res:
-         #
-         ##### Store results 
-         #
-         self.hdStore.aggParams2TableWrite(self.expr, ndarryRes, enaSetupRes, grp='/lab0')
-
-      self.state = self.state.MEAS_WAIT_CONT
+         self.state = self.state.MEAS_WAIT_CONT
 
 
 

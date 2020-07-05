@@ -125,7 +125,7 @@ class ExperimentTable(tables.IsDescription):
 
 class hdf5DataTable:
 
-    def __init__(self, path = defaultPath, dataBase_=dataBaseName, filters=tables.Filters(complevel=0), restore=False, console=True, guidlg = None ):
+    def __init__(self, path = defaultPath, dataBase_=dataBaseName, filters=tables.Filters(complevel=0), restore=False, console=True, guidlg = None, version = "v0.1" ):
         self.data_dir = path
         self.Filters = filters
         self.f = None
@@ -136,6 +136,12 @@ class hdf5DataTable:
         filename = self.get_filename(dataBase_, filters)
         filename = os.path.join(self.data_dir, filename)
         self.filename = filename
+        self.sparamSel =  h5VersionArr["v0.1"]["sparamKeys"]
+        try:
+          self.spramSel = h5VersionArr[version]["sparamKeys"]
+        except:
+          print("HDF5 Data : Error in Version Array")
+          pass 
         if console and restore:
             self.printData('/lab0')
         else:
@@ -153,10 +159,24 @@ class hdf5DataTable:
                   result = guidlg.ShowModal()
                   if result != wx.ID_YES:
                     return 
-            self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'], filters)
+            self.filename = self.createPandasH5Table(self.data_dir, filename, ['lab0'], filters, version= h5VersionArr[version] )
+       
         return
+  
 
-    def createPandasH5Table(self, data_dir, file_, locations, filters):
+  #############################################################
+  #
+  # func createPandasH5Table
+  # In:
+  #   data_dir - hdf5 directory path base
+  #   file_ - 
+  #   locations - Experiment Table group path 
+  #   filters - hdf5 file filter settings.
+  #   version - Internal version of the dataBase .
+  #
+  # Create new Hdf5 data base file and its internal index table.
+  #############################################################
+    def createPandasH5Table(self, data_dir, file_, locations, filters, version = None):
         #    filename = self.get_filename(file_,filters)
         #    filename = os.path.join(data_dir, filename)
         #   hdstore = pd.HDFStore(FILENAME, "w")
@@ -169,7 +189,8 @@ class hdf5DataTable:
             table_lens = f.create_table(flocate, "exprTable", ExperimentTable)
             print ('Created table:')
             print (loc)
-
+            if (version != None):
+               table_lens.attrs.version = version
         #    table_lens.append([lens[col].values for col in table_lens.dtype.names])
         return file_
 

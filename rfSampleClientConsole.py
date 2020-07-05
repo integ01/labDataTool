@@ -176,7 +176,19 @@ def plotMeasLabelsLog(w_,X_, X2_, labels, sparam):
 #    plt.title('Phase Response')
   #plt.legend()
   plt.show()
- 
+
+
+#######################################
+# func plotMeasLabels -
+#  plot a list of measurement graphs on same plot.
+#  Y axis is absolute with log scale of signal
+#  also include labels for each graph.
+#  Inputs: 
+#       w_ - freq scale 
+#       X_ - list of vector signals 
+#       labels - list of labels
+#       sparam - All measurments type label.
+#
 def plotMeasLabels(w_,X_, labels,sparam):
   w = np.array(w_)
 #  X = np.array(X_)
@@ -184,7 +196,8 @@ def plotMeasLabels(w_,X_, labels,sparam):
   cpal = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'indigo', 'gray', 'darkorange']
   plt.subplot(2,1,1)
   for i, X in enumerate(X_):
-    magX = np.abs(X);
+    #magX = np.abs(X);
+    magX = 20*np.log10(np.abs(X));
     #print (X)
     plt.plot(w,magX, marker='', color=cpal[i], label = labels[i], linewidth=1)
  #   plt.xlabel('frequency in GHZ units'); 
@@ -192,7 +205,6 @@ def plotMeasLabels(w_,X_, labels,sparam):
     plt.legend()
   plt.subplot(2,1,2)
   for i, X in enumerate(X_):
-    magX = np.abs(X);
     angX = np.angle(X);
     plt.plot(w,angX, marker='', color=cpal[i], linewidth=1)
     plt.xlabel('frequency in GHZ units'); 
@@ -294,7 +306,8 @@ def decodeQueryDictR( item, name, leading = '( '):
 # dbQueryExprTblByDict:  query function
 # Input:
 #        hdStore - Hd5 storage class
-#        condDict - query conditions encoded in a dictionary format. 
+#        condDict - query conditions encoded in a dictionary format.
+#
 def dbQueryExprTblByDict(hdStore_, condDict):
       global hdStore
       hdStore = hdStore_
