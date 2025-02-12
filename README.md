@@ -6,4 +6,4 @@ The lab tool provides a GUI interface for opration of a spectrum experiment usin
 
 The control interface includes a GUI page with various setup parameters of the experiment and document the (Device Under Test) DUT conditions. The GUI controls and procedures for performing an experiment is defined shown the following:
 
-![VNA Material Experiment Page ](vnaExperimentCapture.obg)
+![VNA Material Experiment Page ](vnaExperimentCapture.png)
